@@ -7,7 +7,10 @@ class output_neuron : public neuron{
 public:
     output_neuron() : neuron(){}
     ~output_neuron(){}
-    
+
+    /*! Accumulate without running activation function,
+        since this is an output neuron
+    */
     double get_output() override{
         double sum = 0.0;
         for(auto in : _inputs){
