@@ -9,6 +9,8 @@
 
 #include <math.h>
 
+#define LEARNING_RATE 0.1
+
 class neuron;
 class input_neuron;
 class output_neuron;

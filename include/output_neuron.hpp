@@ -20,6 +20,13 @@ public:
         return sum;
     }
 
+    void set_error(double error){
+        _error = error;
+    }
+
+    double get_error() override{
+        return _error;
+    }
 };
 
 #endif

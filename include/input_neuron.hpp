@@ -15,6 +15,7 @@ public:
     double get_output() override{
         return _input_value;
     }
+
 };
 
 #endif
