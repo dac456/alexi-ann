@@ -2,6 +2,8 @@
 #include "input_neuron.hpp"
 #include "output_neuron.hpp"
 
+#include <random>
+
 double sigmoid(double value){
     return 1.0 / (1.0 + exp(-value));
 }
@@ -12,6 +14,10 @@ double sigmoid_prime(double value){
 
 int main(int argc, char* argv[])
 {
+    std::random_device rand;
+    std::mt19937 gen(rand());
+    std::uniform_real_distribution<double> dis(0.0, 1.0);
+
     input_neuron_ptr x = std::make_shared<input_neuron>(2.0);
     input_neuron_ptr y = std::make_shared<input_neuron>(1.0);
     input_neuron_ptr t = std::make_shared<input_neuron>(0.0);
@@ -20,10 +26,10 @@ int main(int argc, char* argv[])
     std::vector<neuron_ptr> hidden_layer1;
     for(size_t i=0; i<6; i++){
         neuron_ptr n = std::make_shared<neuron>();
-        n->add_input_neuron(std::make_pair(x, 0.5));
-        n->add_input_neuron(std::make_pair(y, 0.5));
-        n->add_input_neuron(std::make_pair(t, 0.5));
-        n->add_input_neuron(std::make_pair(v, 0.5));
+        n->add_input_neuron(std::make_pair(x, dis(gen)));
+        n->add_input_neuron(std::make_pair(y, dis(gen)));
+        n->add_input_neuron(std::make_pair(t, dis(gen)));
+        n->add_input_neuron(std::make_pair(v, dis(gen)));
         n->set_activation_function(*sigmoid);
         n->set_activation_function_derivative(*sigmoid_prime);
 
@@ -34,7 +40,7 @@ int main(int argc, char* argv[])
     for(size_t i=0; i<6; i++){
         neuron_ptr n = std::make_shared<neuron>();
         for(auto h1 : hidden_layer1){
-            n->add_input_neuron(std::make_pair(h1, 0.5));
+            n->add_input_neuron(std::make_pair(h1, dis(gen)));
         }
 
         n->set_activation_function(*sigmoid);
@@ -56,10 +62,10 @@ int main(int argc, char* argv[])
     v_out->set_activation_function_derivative(*sigmoid_prime);
 
     for(auto h2 : hidden_layer2){
-        x_out->add_input_neuron(std::make_pair(h2, 0.5));
-        y_out->add_input_neuron(std::make_pair(h2, 0.5));
-        t_out->add_input_neuron(std::make_pair(h2, 0.5));
-        v_out->add_input_neuron(std::make_pair(h2, 0.5));
+        x_out->add_input_neuron(std::make_pair(h2, dis(gen)));
+        y_out->add_input_neuron(std::make_pair(h2, dis(gen)));
+        t_out->add_input_neuron(std::make_pair(h2, dis(gen)));
+        v_out->add_input_neuron(std::make_pair(h2, dis(gen)));
     }
 
     const double target_x = 3.0;
@@ -73,6 +79,8 @@ int main(int argc, char* argv[])
         z = target_x - output;
         x_out->set_error(z);
         x->adjust_weights();
+        //for(auto n : hidden_layer1) n->adjust_weights();
+        //for(auto n : hidden_layer2) n->adjust_weights();
 
         std::cout << z << std::endl;
         num_itr++;
