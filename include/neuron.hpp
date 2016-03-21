@@ -24,6 +24,7 @@ public:
 
     void adjust_weights();
 
+    size_t get_num_inputs();
     size_t get_num_outputs();
 
 protected:

@@ -55,6 +55,10 @@ void neuron::adjust_weights(){
     }
 }
 
+size_t neuron::get_num_inputs(){
+    return _inputs.size();
+}
+
 size_t neuron::get_num_outputs(){
     return _outputs.size();
 }
