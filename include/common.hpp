@@ -7,6 +7,7 @@
 #include <functional>
 #include <utility>
 
+#include <blaze/Math.h>
 #include <math.h>
 
 #define LEARNING_RATE 0.1
