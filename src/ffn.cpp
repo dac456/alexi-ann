@@ -20,7 +20,8 @@ ffn::ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t
     //Index zero holds the input layer
     _weights[0].resize(input_size, 1);
     _weights[0] = 1.0;
-    _activations[0].resize(input_size);
+    _activations[0].resize(input_size, batch_size);
+    _activations[0] = 0.0;
 
     //The first hidden layer must match the size of the input vector
     _weights[1].resize(hidden_layer_dim, input_size);
@@ -33,14 +34,16 @@ ffn::ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t
     }
 
     for(size_t i=1; i<=num_hidden_layers; i++){
-        _activations[i].resize(hidden_layer_dim);
+        _activations[i].resize(hidden_layer_dim, batch_size);
+        _activations[i] = 0.0;
     }
 
     //The output weights (index L) must match the size of the output vector
     _weights[L].resize(output_size, hidden_layer_dim);
     rndMat.randomize(_weights[L], 0.0, 0.2);
 
-    _activations[L].resize(output_size);
+    _activations[L].resize(output_size, batch_size);
+    _activations[L] = 0.0;
 }
 
 void ffn::set_hidden_activation_function(std::function<double(double)> fn){
@@ -81,7 +84,6 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
         e_avg = 0.0;
 
         for(size_t batch_num = 0; batch_num < num_batches; batch_num++){
-
             //e_sum holds the accumulated error over all inputs in the batch for each layer
             std::vector< blaze::DynamicMatrix<double> > e_sum;
             e_sum.resize(L + 1);
@@ -90,13 +92,29 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 e_sum[i] = 0.0;
             }
 
+            blaze::DynamicMatrix<double> X;
+            X.resize(_input_size, _batch_size);
+            X = 0.0;
+            blaze::DynamicMatrix<double> y;
+            y.resize(_output_size, _batch_size);
+            y = 0.0;
+
             size_t num_examples = 0; //Track the number of inputs we have actually seen, in case < batch_size
+            size_t xb = 0;
+            size_t yb = 0;
             for(size_t b = (batch_num*_batch_size); b < ((batch_num+1)*_batch_size); b++){
                 if(b < input.columns()){
-                    blaze::DynamicVector<double, blaze::columnVector> X = column(input, b);
-                    blaze::DynamicVector<double, blaze::columnVector> y = column(output, b);
+                    //blaze::DynamicVector<double, blaze::columnVector> X = column(input, b);
+                    //blaze::DynamicVector<double, blaze::columnVector> y = column(output, b);
+                    column(X, xb) = column(input, b);
+                    column(y, yb) = column(output, b);
+                    xb++; yb++;
+                    num_examples++;
+                }
+            }
 
-                    std::vector< blaze::DynamicVector<double, blaze::columnVector> > z;
+                    //std::vector< blaze::DynamicVector<double, blaze::columnVector> > z;
+                    std::vector< blaze::DynamicMatrix<double> > z;
                     z.resize(L + 1);
 
                     _activations[0] = X;
@@ -105,48 +123,65 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     for(size_t l = 1; l < L; l++){
                         z[l] = _weights[l]*_activations[l-1];
 
-                        #pragma omp parallel for
-                        for(size_t i=0; i<z[l].size(); i++){
-                            _activations[l][i] = _hidden_activation_function(z[l][i]);
+                        for(size_t j = 0; j < _activations[l].columns(); j++){
+                            #pragma omp parallel for
+                            for(size_t i=0; i<z[l].rows(); i++){
+                                _activations[l](i,j) = _hidden_activation_function(z[l](i,j));
+                            }
                         }
                     }
 
                     //blaze::DynamicVector<double, blaze::columnVector> o = _weights[L]*_activations[L - 1];
                     z[L] = _weights[L]*_activations[L-1];
 
-                    #pragma omp parallel for
-                    for(size_t i=0; i<z[L].size(); i++){
-                        _activations[L][i] = _output_activation_function(z[L][i]);
+                    for(size_t j = 0; j < _activations[L].columns(); j++){
+                        #pragma omp parallel for
+                        for(size_t i=0; i<z[L].rows(); i++){
+                            _activations[L](i,j) = _output_activation_function(z[L](i,j));
+                        }
                     }
 
-                    blaze::DynamicVector<double, blaze::columnVector> dy = _activations[L] - y;
+                    //blaze::DynamicVector<double, blaze::columnVector> dy = _activations[L] - y;
+                    blaze::DynamicMatrix<double> dy = _activations[L] - y;
 
                     //Backprop error
-                    std::vector< blaze::DynamicVector<double, blaze::columnVector> > e;
+                    //std::vector< blaze::DynamicVector<double, blaze::columnVector> > e;
+                    std::vector< blaze::DynamicMatrix<double> > e;
                     e.resize(L + 1);
+                    for(size_t i = 0; i < e.size(); i++){
+                        e[i] = 0.0;
+                    }
 
                     e[L] = dy;
-                    e_avg += e[L];
 
                     #pragma omp parallel for
-                    for(size_t i=0; i<e[L].size(); i++){
-                        e[L][i] *= _output_activation_function_dx(e[L][i]);
+                    for(size_t j = 0; j < num_examples; j++){
+                        e_avg += column(e[L], j);
+                    }
+
+                    for(size_t j = 0; j < e[L].columns(); j++){
+                        #pragma omp parallel for
+                        for(size_t i=0; i<e[L].rows(); i++){
+                            e[L](i,j) *= _output_activation_function_dx(e[L](i,j));
+                        }
                     }
 
                     for(size_t l=L-1; l>=1; l--){
                         e[l] = trans(_weights[l+1])*e[l+1];
 
-                        #pragma omp parallel for
-                        for(size_t i=0; i<e[l].size(); i++){
-                            e[l][i] *= _hidden_activation_function_dx(z[l][i]);
+                        for(size_t j = 0; j < e[l].columns(); j++){
+                            #pragma omp parallel for
+                            for(size_t i=0; i<e[l].rows(); i++){
+                                e[l](i,j) *= _hidden_activation_function_dx(z[l](i,j));
+                            }
                         }
 
                         if(l == 1) break;
                     }
 
-                    //Accumulate error for each layer for this input X
+                    //Accumulate error for each layer for each input X
                     for(size_t l = 1; l <= L; l++){
-                        if(e[l].size() == 1 || _activations[0].size() == 1){
+                        if(e[l].rows() == 1 || _activations[0].rows() == 1){
                             e_sum[l] += trans(e[l]*trans(_activations[l-1]));
                         }
                         else{
@@ -154,12 +189,12 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                         }
                     }
 
-                    num_examples++;
+            /*        num_examples++;
                 }
                 else{
                     break;
                 }
-            }
+            }*/
 
             //Update weights
             for(size_t l=1; l <= L; l++){
@@ -176,8 +211,9 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
         }
 
         e_avg /= input.columns();
+        //std::cout << "e avg: " << length(e_avg) << std::endl;
 
-        if(length(e_avg) < 0.000001){
+        if(length(e_avg) < 0.00001){
             break_epoch = true;
             std::cout << "breaking at epoch " << current_epoch << std::endl;
         }
@@ -188,32 +224,41 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
     return true;
 }
 
-blaze::DynamicVector<double, blaze::columnVector> ffn::predict(blaze::DynamicVector<double> input){
+blaze::DynamicVector<double, blaze::columnVector> ffn::predict(blaze::DynamicVector<double, blaze::columnVector> input){
     assert(input.size() == _input_size);
 
     const size_t L = _num_hidden_layers + 1;
 
-    std::vector< blaze::DynamicVector<double, blaze::columnVector> > z;
+    std::vector< blaze::DynamicMatrix<double> > z;
     z.resize(L + 1);
 
-    _activations[0] = input;
-    z[0] = input;
+    blaze::DynamicMatrix<double> input_m;
+    input_m.resize(input.size(), 1);
+    column(input_m, 0) = input;
+
+    _activations[0] = input_m;
+    z[0] = input_m;
 
     for(size_t l = 1; l < L; l++){
         z[l] = _weights[l]*_activations[l-1];
 
-        #pragma omp parallel for
-        for(size_t i=0; i<z[l].size(); i++){
-            _activations[l][i] = _hidden_activation_function(z[l][i]);
+        for(size_t j = 0; j < _activations[l].columns(); j++){
+            #pragma omp parallel for
+            for(size_t i=0; i<z[l].rows(); i++){
+                _activations[l](i,j) = _hidden_activation_function(z[l](i,j));
+            }
         }
     }
 
+    //blaze::DynamicVector<double, blaze::columnVector> o = _weights[L]*_activations[L - 1];
     z[L] = _weights[L]*_activations[L-1];
 
-    #pragma omp parallel for
-    for(size_t i=0; i<z[L].size(); i++){
-        _activations[L][i] = _output_activation_function(z[L][i]);
+    for(size_t j = 0; j < _activations[L].columns(); j++){
+        #pragma omp parallel for
+        for(size_t i=0; i<z[L].rows(); i++){
+            _activations[L](i,j) = _output_activation_function(z[L](i,j));
+        }
     }
 
-    return _activations[L];
+    return column(_activations[L], 0);
 }

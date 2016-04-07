@@ -49,8 +49,8 @@ int main(int argc, char* argv[])
     test_ffn.set_output_activation_function(linear);
     test_ffn.set_output_activation_function_dx(linear_dx);
 
-    blaze::DynamicMatrix<double> input(2,3);
-    blaze::DynamicMatrix<double> target(2,3);
+    blaze::DynamicMatrix<double> input(2,4);
+    blaze::DynamicMatrix<double> target(2,4);
 
     column(input, 0) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.0, 2.1);
     column(target, 0) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.5, 2.7);
@@ -60,6 +60,9 @@ int main(int argc, char* argv[])
 
     column(input, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.4, 3.6);
     column(target, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.3, 3.0);
+
+    column(input, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.4, 1.6);
+    column(target, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.3, 1.1);
 
     std::cout << "Training..." << std::endl;
     test_ffn.train(input, target);

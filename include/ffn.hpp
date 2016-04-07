@@ -17,7 +17,8 @@ private:
     //blaze::DynamicMatrix<double> _output_weights;
 
     std::vector< blaze::DynamicMatrix<double> > _weights;
-    std::vector< blaze::DynamicVector<double, blaze::columnVector> > _activations;
+    //std::vector< blaze::DynamicVector<double, blaze::columnVector> > _activations;
+    std::vector< blaze::DynamicMatrix<double> > _activations;
 
     std::function<double(double)> _hidden_activation_function;
     std::function<double(double)> _hidden_activation_function_dx;
@@ -35,7 +36,7 @@ public:
     void set_output_activation_function_dx(std::function<double(double)> fn);
 
     bool train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output);
-    blaze::DynamicVector<double, blaze::columnVector> predict(blaze::DynamicVector<double> input);
+    blaze::DynamicVector<double, blaze::columnVector> predict(blaze::DynamicVector<double, blaze::columnVector> input);
 };
 
 #endif
