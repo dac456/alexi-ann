@@ -2,6 +2,9 @@
 
 #include <random>
 
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
+
 double sigmoid(double value){
     return 1.0 / (1.0 + exp(-value));
 }
@@ -23,12 +26,22 @@ double sigmoid_tanh(double value){
 }
 
 double tanh_dx(double value){
-    1.0 - pow(tanh(value), 2.0);
+    return 1.0 - pow(tanh(value), 2.0);
 }
 
 int main(int argc, char* argv[])
 {
-    blaze::setNumThreads(8);
+    //Get options
+    po::options_description desc("supported options");
+    desc.add_options()
+        ("nt", po::value<int>()->default_value(8), "Number of OMP threads.")
+    ;
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    blaze::setNumThreads(vm["nt"].as<int>());
 
     ffn test_ffn(2, 2, 2, 6, 2);
     test_ffn.set_hidden_activation_function(sigmoid);

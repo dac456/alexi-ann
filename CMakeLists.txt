@@ -1,8 +1,16 @@
 cmake_minimum_required(VERSION 2.8)
 project(alexi-ann)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -qopenmp -O0 -ggdb")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -qopenmp -O3 -xsse4.2")
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fopenmp -O3 -march=native")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    #Clang does not support OMP, so use C++ threads
+    add_definitions( -DBLAZE_USE_CPP_THREADS )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -march=native")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -qopenmp -O3 -march=native")
+endif()
+message(${CMAKE_CXX_FLAGS})
 
 
 # ----------

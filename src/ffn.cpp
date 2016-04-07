@@ -184,6 +184,8 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
 
         current_epoch++;
     }
+
+    return true;
 }
 
 blaze::DynamicVector<double, blaze::columnVector> ffn::predict(blaze::DynamicVector<double> input){
