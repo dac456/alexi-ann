@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 
     blaze::setNumThreads(vm["nt"].as<int>());
 
-    ffn test_ffn(2, 2, 2, 6, 2);
+    ffn test_ffn(2, 2, 2, 6, 1);
     test_ffn.set_hidden_activation_function(sigmoid);
     test_ffn.set_hidden_activation_function_dx(sigmoid_dx);
     test_ffn.set_output_activation_function(linear);
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
     column(target, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.3, 3.0);
 
     column(input, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.4, 1.6);
-    column(target, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.3, 1.1);
+    column(target, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.7, 1.1);
 
     std::cout << "Training..." << std::endl;
     test_ffn.train(input, target);
