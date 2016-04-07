@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(alexi-ann)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -qopenmp -O0 -ggdb")
 
 # ----------
 # Find Boost
