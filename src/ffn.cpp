@@ -68,15 +68,19 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
 
     const size_t L = _num_hidden_layers + 1;
 
-    const size_t num_epochs = 10000;
+    const size_t num_epochs = 20000;
     size_t current_epoch = 0;
-
-    while(current_epoch < num_epochs){
+    bool break_epoch = false;
+    while(/*current_epoch < num_epochs &&*/ !break_epoch){
         //Create batches
         size_t num_batches = ceil(double(input.columns())/double(_batch_size));
-        std::cout << "num_batches: " << num_batches << std::endl;
+
+        //Accumulate the average error at the output layer in e_avg
+        blaze::DynamicVector<double> e_avg;
+        e_avg.resize(_output_size);
+        e_avg = 0.0;
+
         for(size_t batch_num = 0; batch_num < num_batches; batch_num++){
-            std::cout << "batch_num: " << batch_num << std::endl;
 
             //e_sum holds the accumulated error over all inputs in the batch for each layer
             std::vector< blaze::DynamicMatrix<double> > e_sum;
@@ -88,7 +92,6 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
 
             size_t num_examples = 0; //Track the number of inputs we have actually seen, in case < batch_size
             for(size_t b = (batch_num*_batch_size); b < ((batch_num+1)*_batch_size); b++){
-                std::cout << "b: " << b << std::endl;
                 if(b < input.columns()){
                     blaze::DynamicVector<double, blaze::columnVector> X = column(input, b);
                     blaze::DynamicVector<double, blaze::columnVector> y = column(output, b);
@@ -118,14 +121,12 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
 
                     blaze::DynamicVector<double, blaze::columnVector> dy = _activations[L] - y;
 
-                    std::cout << dy << std::endl;
-
                     //Backprop error
                     std::vector< blaze::DynamicVector<double, blaze::columnVector> > e;
                     e.resize(L + 1);
 
                     e[L] = dy;
-                    std::cout << "error mag: " << length(e[L]) << std::endl;
+                    e_avg += e[L];
 
                     #pragma omp parallel for
                     for(size_t i=0; i<e[L].size(); i++){
@@ -172,6 +173,13 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 e_sum[l] = 0.0;
             }
 
+        }
+
+        e_avg /= input.columns();
+
+        if(length(e_avg) < 0.000001){
+            break_epoch = true;
+            std::cout << "breaking at epoch " << current_epoch << std::endl;
         }
 
         current_epoch++;

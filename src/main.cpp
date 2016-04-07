@@ -18,6 +18,14 @@ double linear_dx(double value){
     return 1.0;
 }
 
+double sigmoid_tanh(double value){
+    return tanh(value);
+}
+
+double tanh_dx(double value){
+    1.0 - pow(tanh(value), 2.0);
+}
+
 int main(int argc, char* argv[])
 {
     blaze::setNumThreads(8);
@@ -40,6 +48,7 @@ int main(int argc, char* argv[])
     column(input, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.4, 3.6);
     column(target, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.3, 3.0);
 
+    std::cout << "Training..." << std::endl;
     test_ffn.train(input, target);
 
     std::cout << "Predicting..." << std::endl;
