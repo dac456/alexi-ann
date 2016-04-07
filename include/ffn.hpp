@@ -35,6 +35,7 @@ public:
     void set_output_activation_function_dx(std::function<double(double)> fn);
 
     bool train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output);
+    blaze::DynamicVector<double, blaze::columnVector> predict(blaze::DynamicVector<double> input);
 };
 
 #endif

@@ -10,7 +10,7 @@
 #include <blaze/Math.h>
 #include <math.h>
 
-#define LEARNING_RATE 0.2
+#define LEARNING_RATE 0.5
 
 class neuron;
 class input_neuron;

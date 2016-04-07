@@ -21,20 +21,29 @@ double linear_dx(double value){
 int main(int argc, char* argv[])
 {
     blaze::setNumThreads(8);
-    
-    ffn test_ffn(2, 2, 2, 2, 10);
+
+    ffn test_ffn(2, 2, 2, 6, 2);
     test_ffn.set_hidden_activation_function(sigmoid);
     test_ffn.set_hidden_activation_function_dx(sigmoid_dx);
     test_ffn.set_output_activation_function(linear);
     test_ffn.set_output_activation_function_dx(linear_dx);
 
-    blaze::DynamicMatrix<double> input(2,1);
-    blaze::DynamicMatrix<double> target(2,1);
+    blaze::DynamicMatrix<double> input(2,3);
+    blaze::DynamicMatrix<double> target(2,3);
 
     column(input, 0) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.0, 2.1);
     column(target, 0) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.5, 2.7);
 
+    column(input, 1) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.4, 2.6);
+    column(target, 1) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.3, 2.0);
+
+    column(input, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.4, 3.6);
+    column(target, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.3, 3.0);
+
     test_ffn.train(input, target);
+
+    std::cout << "Predicting..." << std::endl;
+    std::cout << test_ffn.predict(blaze::StaticVector<double,2UL,blaze::columnVector>(3.4, 3.6)) << std::endl;
 
     return 0;
 }
