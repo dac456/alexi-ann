@@ -1,6 +1,7 @@
 #include "training_set.hpp"
 #include "../contrib/alphanum.hpp"
 
+#include <fstream>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
@@ -24,12 +25,19 @@ training_set::training_set(fs::path path)
         frames.pop_back();
     }
 
-    _input_set.resize(5, (frames.size()/2)-1);
-    _target_set.resize(3, (frames.size()/2)-1);
+    size_t num_frames = frames.size();
+    size_t set_size = frames.size()/2;
+    if(set_size % 2 != 0){
+        set_size -= 1;
+        num_frames -= 2;
+    }
+
+    _input_set.resize(5, set_size);
+    _target_set.resize(3, set_size);
 
     size_t ij = 0;
     size_t tj = 0;
-    for(size_t i = 0; i < frames.size()-2; i++){
+    for(size_t i = 0; i < num_frames; i++){
         frame_data data = _parse_frame(frames[i]);
         if(i % 2 == 0){
             column(_input_set, ij) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.x, data.y, data.theta, data.v, data.w);

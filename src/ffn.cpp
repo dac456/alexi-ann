@@ -202,7 +202,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
             std::cout << length(e_tot) << std::endl;
         }
 
-        if(length(e_tot) < 10.0){
+        if(length(e_tot) < 1.0){
             break_epoch = true;
             std::cout << "breaking at epoch " << current_epoch << std::endl;
             std::cout << "total error: " << length(e_tot) << std::endl;
