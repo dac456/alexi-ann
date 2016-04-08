@@ -5,15 +5,18 @@
 
 struct frame_data{
     int x, y;
-    float theta;
+    double theta;
 
-    float v;
-    float w;
+    double v;
+    double w;
 };
 
 class training_set{
 private:
     fs::path _set_path;
+
+    blaze::DynamicMatrix<double> _input_set;
+    blaze::DynamicMatrix<double> _target_set;
 
 public:
     training_set(fs::path p);

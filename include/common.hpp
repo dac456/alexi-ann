@@ -13,7 +13,7 @@
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 
-#define LEARNING_RATE 0.5
+#define LEARNING_RATE 0.00001
 
 class neuron;
 class input_neuron;

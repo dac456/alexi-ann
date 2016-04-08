@@ -25,12 +25,12 @@ ffn::ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t
 
     //The first hidden layer must match the size of the input vector
     _weights[1].resize(hidden_layer_dim, input_size);
-    rndMat.randomize(_weights[1], 0.0, 0.2);
+    rndMat.randomize(_weights[1], 0.0, 1.0);
 
     //If there are other hidden layers, there are of uniform size
     for(size_t i=2; i<=num_hidden_layers; i++){
         _weights[i].resize(hidden_layer_dim, hidden_layer_dim);
-        rndMat.randomize(_weights[i], 0.0, 0.2);
+        rndMat.randomize(_weights[i], 0.0, 1.0);
     }
 
     for(size_t i=1; i<=num_hidden_layers; i++){
@@ -40,7 +40,7 @@ ffn::ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t
 
     //The output weights (index L) must match the size of the output vector
     _weights[L].resize(output_size, hidden_layer_dim);
-    rndMat.randomize(_weights[L], 0.0, 0.2);
+    rndMat.randomize(_weights[L], 0.0, 1.0);
 
     _activations[L].resize(output_size, batch_size);
     _activations[L] = 0.0;
@@ -63,12 +63,12 @@ void ffn::set_output_activation_function_dx(std::function<double(double)> fn){
 }
 
 bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output){
-    assert(input.capacity() == output.capacity());
+    assert(input.columns() == output.columns());
     assert(input.rows() == _input_size && output.rows() == _output_size);
 
     const size_t L = _num_hidden_layers + 1;
 
-    const size_t num_epochs = 20000;
+    const size_t num_epochs = 200;
     size_t current_epoch = 0;
     bool break_epoch = false;
     while(/*current_epoch < num_epochs &&*/ !break_epoch){
@@ -152,7 +152,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
             e[L] = dy;
 
             #pragma omp parallel for
-            for(size_t j = 0; j < num_examples; j++){
+            for(size_t j = 0; j < e[L].columns(); j++){
                 e_avg += column(e[L], j);
             }
 
@@ -194,12 +194,18 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
 
         }
 
+        blaze::DynamicVector<double> e_tot = e_avg;
         e_avg /= input.columns();
         //std::cout << "e avg: " << length(e_avg) << std::endl;
 
-        if(length(e_avg) < 0.0000001){
+        if(!(current_epoch % 10)){
+            std::cout << length(e_tot) << std::endl;
+        }
+
+        if(length(e_tot) < 10.0){
             break_epoch = true;
             std::cout << "breaking at epoch " << current_epoch << std::endl;
+            std::cout << "total error: " << length(e_tot) << std::endl;
         }
 
         current_epoch++;
