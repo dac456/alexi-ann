@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
     desc.add_options()
         ("nt", po::value<int>()->default_value(8), "Number of OMP threads.")
         ("trainingset", po::value<std::string>()->required(), "Path to training set.")
+        ("batchsize", po::value<int>()->required())
     ;
 
     po::variables_map vm;
@@ -50,7 +51,7 @@ int main(int argc, char* argv[])
     std::cout << tset.get_target_set().columns() << std::endl;
 
 
-    ffn test_ffn(5, 3, 20, 100, 121);
+    ffn test_ffn(5, 3, 20, 100, vm["batchsize"].as<int>());
     test_ffn.set_hidden_activation_function(sigmoid_tanh);
     test_ffn.set_hidden_activation_function_dx(tanh_dx);
     test_ffn.set_output_activation_function(linear);
