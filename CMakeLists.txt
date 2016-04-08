@@ -17,7 +17,7 @@ message(${CMAKE_CXX_FLAGS})
 # Find Boost
 # ----------
 
-find_package(Boost 1.54 COMPONENTS system filesystem program_options thread REQUIRED)
+find_package(Boost COMPONENTS system filesystem program_options thread REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
