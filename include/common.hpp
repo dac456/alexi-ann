@@ -10,6 +10,9 @@
 #include <blaze/Math.h>
 #include <math.h>
 
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+
 #define LEARNING_RATE 0.5
 
 class neuron;
