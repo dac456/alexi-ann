@@ -68,10 +68,10 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
 
     const size_t L = _num_hidden_layers + 1;
 
-    const size_t num_epochs = 200;
+    const size_t num_epochs = 10000;
     size_t current_epoch = 0;
     bool break_epoch = false;
-    while(/*current_epoch < num_epochs &&*/ !break_epoch){
+    while(current_epoch < num_epochs && !break_epoch){
         size_t num_batches = ceil(double(input.columns())/double(_batch_size));
 
         //Accumulate the average error at the output layer in e_avg
@@ -152,7 +152,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
             e[L] = dy;
 
             #pragma omp parallel for
-            for(size_t j = 0; j < e[L].columns(); j++){
+            for(size_t j = 0; j < num_examples; j++){
                 e_avg += column(e[L], j);
             }
 
@@ -202,7 +202,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
             std::cout << length(e_tot) << std::endl;
         }
 
-        if(length(e_tot) < 1.0){
+        if(length(e_tot) < 0.1){
             break_epoch = true;
             std::cout << "breaking at epoch " << current_epoch << std::endl;
             std::cout << "total error: " << length(e_tot) << std::endl;

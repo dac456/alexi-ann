@@ -54,8 +54,8 @@ int main(int argc, char* argv[])
 
 
     ffn test_ffn(5, 3, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), vm["batchsize"].as<int>());
-    test_ffn.set_hidden_activation_function(sigmoid_tanh);
-    test_ffn.set_hidden_activation_function_dx(tanh_dx);
+    test_ffn.set_hidden_activation_function(sigmoid);
+    test_ffn.set_hidden_activation_function_dx(sigmoid_dx);
     test_ffn.set_output_activation_function(linear);
     test_ffn.set_output_activation_function_dx(linear_dx);
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
     test_ffn.train(tset.get_input_set(), tset.get_target_set());
 
     std::cout << "Predicting..." << std::endl;
-    std::cout << test_ffn.predict(blaze::StaticVector<double,5UL,blaze::columnVector>(64, 42, -0.0156063, 2.0, 0.0)) << std::endl;
+    std::cout << test_ffn.predict(blaze::StaticVector<double,5UL,blaze::columnVector>(64/128.0, 42/384.0, -0.0156063/6.28, 2.0, 0.0)) << std::endl;
 
     return 0;
 }

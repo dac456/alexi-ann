@@ -9,6 +9,8 @@ struct frame_data{
 
     double v;
     double w;
+
+    int pw, ph;
 };
 
 class training_set{

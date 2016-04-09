@@ -40,11 +40,11 @@ training_set::training_set(fs::path path)
     for(size_t i = 0; i < num_frames; i++){
         frame_data data = _parse_frame(frames[i]);
         if(i % 2 == 0){
-            column(_input_set, ij) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.x, data.y, data.theta, data.v, data.w);
+            column(_input_set, ij) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.x/double(data.pw), data.y/double(data.ph), data.theta/6.28, data.v, data.w);
             ij++;
         }
         else{
-            column(_target_set, tj) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.x, data.y, data.theta);
+            column(_target_set, tj) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.x/double(data.pw), data.y/double(data.ph), data.theta/6.28);
             tj++;
         }
     }
@@ -98,6 +98,9 @@ frame_data training_set::_parse_frame(fs::path file){
 
     out.v = vm["vdl"].as<double>();
     out.w = vm["vda"].as<double>();
+
+    out.pw = vm["rw"].as<double>() / vm["dppx"].as<double>();
+    out.ph = vm["rl"].as<double>() / vm["dppy"].as<double>();
 
     return out;
 }
