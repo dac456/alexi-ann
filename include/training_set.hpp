@@ -4,7 +4,9 @@
 #include "common.hpp"
 
 struct frame_data{
-    int x, y;
+    double rw, rl;
+    
+    double x, y;
     double theta;
 
     double v;
@@ -19,6 +21,8 @@ private:
 
     blaze::DynamicMatrix<double> _input_set;
     blaze::DynamicMatrix<double> _target_set;
+
+    frame_data _last_frame;
 
 public:
     training_set(fs::path p);

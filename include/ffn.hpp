@@ -17,8 +17,8 @@ private:
     //blaze::DynamicMatrix<double> _output_weights;
 
     std::vector< blaze::DynamicMatrix<double> > _weights;
-    //std::vector< blaze::DynamicVector<double, blaze::columnVector> > _activations;
-    std::vector< blaze::DynamicMatrix<double> > _activations;
+    std::vector< blaze::DynamicVector<double, blaze::columnVector> > _biases;
+    std::vector< blaze::DynamicVector<double, blaze::columnVector> > _activations;
 
     std::function<double(double)> _hidden_activation_function;
     std::function<double(double)> _hidden_activation_function_dx;

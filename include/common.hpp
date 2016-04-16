@@ -13,14 +13,4 @@
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 
-#define LEARNING_RATE 0.0001
-
-class neuron;
-class input_neuron;
-class output_neuron;
-
-typedef std::shared_ptr<neuron> neuron_ptr;
-typedef std::shared_ptr<input_neuron> input_neuron_ptr;
-typedef std::shared_ptr<output_neuron> output_neuron_ptr;
-
 #endif

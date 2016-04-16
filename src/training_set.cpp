@@ -32,22 +32,63 @@ training_set::training_set(fs::path path)
         num_frames -= 2;
     }
 
-    _input_set.resize(5, set_size);
-    _target_set.resize(3, set_size);
+    _input_set.resize(2, set_size);
+    _target_set.resize(2, set_size);
+    //std::vector< blaze::StaticVector<double, 2UL, blaze::columnVector> > input_vector;
+    //std::vector< blaze::StaticVector<double, 2UL, blaze::columnVector> > target_vector;
 
     size_t ij = 0;
     size_t tj = 0;
+    bool assign_as_input = true;
     for(size_t i = 0; i < num_frames; i++){
         frame_data data = _parse_frame(frames[i]);
-        if(i % 2 == 0){
-            column(_input_set, ij) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.x/double(data.pw), data.y/double(data.ph), data.theta/6.28, data.v, data.w);
-            ij++;
-        }
-        else{
-            column(_target_set, tj) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.x/double(data.pw), data.y/double(data.ph), data.theta/6.28);
-            tj++;
-        }
+    //    if(i > 0){
+    //        if(data.x == _last_frame.x && data.y == _last_frame.y){
+    //            i++;
+    //        }
+    //        else{
+
+                if(assign_as_input){
+                    column(_input_set, ij) = blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y);
+                    //input_vector.push_back(blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y));
+                    ij++;
+                    //i++;
+                    assign_as_input = false;
+                }
+                else{
+                    column(_target_set, tj) = blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y);
+                    //target_vector.push_back(blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y));
+                    tj++;
+                    assign_as_input = true;
+                }
+        //    }
+        //}
+        //else{
+        //    //column(_input_set, ij) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.x/double(data.pw), data.y/double(data.ph), data.theta/6.28, data.v, data.w);
+        //    input_vector.push_back(blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y));
+        //    ij++;
+        //    i++;
+        //    assign_as_input = false;
+        //}
+
+        //_last_frame = data;
     }
+
+    /*if(input_vector.size() < target_vector.size()){
+        target_vector.resize(input_vector.size());
+    }
+    else if(target_vector.size() < input_vector.size()){
+        input_vector.resize(target_vector.size());
+    }
+
+    _input_set.resize(2, input_vector.size());
+    _target_set.resize(2, target_vector.size());
+    for(size_t i = 0; i < input_vector.size(); i++){
+        column(_input_set, i) = input_vector[i];
+    }
+    for(size_t i = 0; i < target_vector.size(); i++){
+        column(_target_set, i) = target_vector[i];
+    }*/
 }
 
 blaze::DynamicMatrix<double> training_set::get_input_set(){
@@ -69,8 +110,10 @@ frame_data training_set::_parse_frame(fs::path file){
 
         ("warped", po::value<bool>(), "Did vehicle warp between this frame and last")
 
-        ("vx", po::value<int>())
-        ("vy", po::value<int>())
+        ("vx", po::value<int>(), "Pixel-space x position")
+        ("vy", po::value<int>(), "Pixel-space y position")
+        ("vxr", po::value<double>(), "Real x position")
+        ("vyr", po::value<double>(), "Real y position")
         ("vtheta", po::value<double>())
 
         ("vdl", po::value<double>())
@@ -92,8 +135,11 @@ frame_data training_set::_parse_frame(fs::path file){
     po::notify(vm);
 
     frame_data out;
-    out.x = vm["vx"].as<int>();
-    out.y = vm["vy"].as<int>();
+    out.rw = vm["rw"].as<double>();
+    out.rl = vm["rl"].as<double>();
+
+    out.x = vm["vxr"].as<double>();
+    out.y = vm["vyr"].as<double>();
     out.theta = vm["vtheta"].as<double>();
 
     out.v = vm["vdl"].as<double>();
