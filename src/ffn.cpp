@@ -153,7 +153,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     z[l] = _weights[l]*_activations[l-1] + _biases[l];
 
                     //for(size_t j = 0; j < _activations[l].columns(); j++){
-                        //#pramga omp parallel for
+                        //#pragma omp parallel for
                         for(size_t i=0; i<z[l].size(); i++){
                             _activations[l][i] = _hidden_activation_function(z[l][i]);
                         }
@@ -164,7 +164,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 z[L] = _weights[L]*_activations[L-1] + _biases[L];
 
                 //for(size_t j = 0; j < _activations[L].columns(); j++){
-                    //#pramga omp parallel for
+                    //#pragma omp parallel for
                     for(size_t i=0; i<z[L].size(); i++){
                         _activations[L][i] = _output_activation_function(z[L][i]);
                     }
@@ -183,14 +183,14 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
 
                 e[L] = dy;
 
-                //#pramga omp parallel for
+                //#pragma omp parallel for
                 //for(size_t j = 0; j < num_examples; j++){
                 //    e_avg += column(e[L], j);
                 //}
                 e_avg += e[L];
 
                 //for(size_t j = 0; j < e[L].columns(); j++){
-                    //#pramga omp parallel for
+                    //#pragma omp parallel for
                     for(size_t i=0; i<e[L].size(); i++){
                         e[L][i] *= _output_activation_function_dx(e[L][i]);
                     }
@@ -200,7 +200,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     e[l] = trans(_weights[l+1])*e[l+1];
 
                     //for(size_t j = 0; j < e[l].columns(); j++){
-                        //#pramga omp parallel for
+                        //#pragma omp parallel for
                         for(size_t i=0; i<e[l].size(); i++){
                             e[l][i] *= _hidden_activation_function_dx(z[l][i]);
                         }
@@ -253,7 +253,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
         }
 
         if(!(current_epoch % 20)){
-            std::cout << length(e_tot) << std::endl;
+            //std::cout << length(e_tot) << std::endl;
             /*if(length(e_tot) > last_total_error){
                 rate *= 0.5;
                 std::cout << "new rate: " << rate << std::endl;
@@ -265,9 +265,9 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
             last_total_error = length(e_tot);
         }
 
-        if(length(e_tot) == 0){
+        if(length(e_tot) < 0.005){
             break_epoch = true;
-            //std::cout << "breaking at epoch " << current_epoch << std::endl;
+            std::cout << "breaking at epoch " << current_epoch << std::endl;
             //std::cout << "total error: " << length(e_tot) << std::endl;
         }
 
@@ -297,7 +297,7 @@ blaze::DynamicVector<double, blaze::columnVector> ffn::predict(blaze::DynamicVec
         z[l] = _weights[l]*_activations[l-1] + _biases[l];
 
         //for(size_t j = 0; j < _activations[l].columns(); j++){
-            //#pramga omp parallel for
+            #pragma omp parallel for
             for(size_t i=0; i<z[l].size(); i++){
                 _activations[l][i] = _hidden_activation_function(z[l][i]);
             }
@@ -308,7 +308,7 @@ blaze::DynamicVector<double, blaze::columnVector> ffn::predict(blaze::DynamicVec
     z[L] = _weights[L]*_activations[L-1] + _biases[L];
 
     //for(size_t j = 0; j < _activations[L].columns(); j++){
-        //#pramga omp parallel for
+        #pragma omp parallel for
         for(size_t i=0; i<z[L].size(); i++){
             _activations[L][i] = _output_activation_function(z[L][i]);
         }

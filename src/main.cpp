@@ -1,4 +1,5 @@
 #include "ffn.hpp"
+#include "fann_ffn.hpp"
 #include "training_set.hpp"
 
 #include <random>
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
         ("nt", po::value<int>()->default_value(8), "Number of OMP threads.")
         ("trainingset", po::value<std::string>()->required(), "Path to training set.")
         ("batchsize", po::value<int>()->default_value(1))
-        ("numhidden", po::value<int>()->default_value(20))
+        ("numhidden", po::value<int>()->default_value(1))
         ("hiddensize", po::value<int>()->default_value(20))
     ;
 
@@ -52,12 +53,21 @@ int main(int argc, char* argv[])
     std::cout << tset.get_input_set().columns() << std::endl;
     std::cout << tset.get_target_set().columns() << std::endl;
 
+    tset.save_fann_data("./fann_ffn.data");
 
-    ffn test_ffn(2, 2, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), vm["batchsize"].as<int>());
-    test_ffn.set_hidden_activation_function(sigmoid);
-    test_ffn.set_hidden_activation_function_dx(sigmoid_dx);
-    test_ffn.set_output_activation_function(linear);
-    test_ffn.set_output_activation_function_dx(linear_dx);
+    fann_ffn test_ffn(4, 2, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    test_ffn.train("./fann_ffn.data");
+
+    float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};
+    float* out = test_ffn.predict(test);
+    std::cout << out[0] << " " << out[1] << std::endl;
+
+
+    ffn test_ffn2(4, 2, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), vm["batchsize"].as<int>());
+    test_ffn2.set_hidden_activation_function(sigmoid);
+    test_ffn2.set_hidden_activation_function_dx(sigmoid_dx);
+    test_ffn2.set_output_activation_function(linear);
+    test_ffn2.set_output_activation_function_dx(linear_dx);
 
     /*blaze::DynamicMatrix<double> input(2,4);
     blaze::DynamicMatrix<double> target(2,4);
@@ -75,10 +85,10 @@ int main(int argc, char* argv[])
     column(target, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.7, 1.1);*/
 
     std::cout << "Training..." << std::endl;
-    test_ffn.train(tset.get_input_set(), tset.get_target_set());
+    test_ffn2.train(tset.get_input_set(), tset.get_target_set());
 
     std::cout << "Predicting..." << std::endl;
-    std::cout << test_ffn.predict(blaze::StaticVector<double,2UL,blaze::columnVector>(190, 83)) << std::endl;
+    std::cout << test_ffn2.predict(blaze::StaticVector<double,4UL,blaze::columnVector>(-21.3466f, -0.245896f, 2.0f, -1.57f)) << std::endl;
     //std::cout << test_ffn.predict(blaze::StaticVector<double,5UL,blaze::columnVector>(20, 100, -0.0156063, 2.0, 0.0)) << std::endl;
 
     return 0;

@@ -32,7 +32,7 @@ training_set::training_set(fs::path path)
         num_frames -= 2;
     }
 
-    _input_set.resize(2, set_size);
+    _input_set.resize(4, set_size);
     _target_set.resize(2, set_size);
     //std::vector< blaze::StaticVector<double, 2UL, blaze::columnVector> > input_vector;
     //std::vector< blaze::StaticVector<double, 2UL, blaze::columnVector> > target_vector;
@@ -49,7 +49,7 @@ training_set::training_set(fs::path path)
     //        else{
 
                 if(assign_as_input){
-                    column(_input_set, ij) = blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y);
+                    column(_input_set, ij) = blaze::StaticVector<double, 4UL, blaze::columnVector>(data.x, data.y, data.v, data.w);
                     //input_vector.push_back(blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y));
                     ij++;
                     //i++;
@@ -91,6 +91,18 @@ training_set::training_set(fs::path path)
     }*/
 }
 
+void training_set::save_fann_data(fs::path file){
+    std::ofstream fout(file.string());
+
+    fout << _input_set.columns() << " 4 2" << std::endl;
+    for(size_t i = 0; i < _input_set.columns(); i++){
+        fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << std::endl;
+        fout << _target_set(0,i) << " " << _target_set(1,i) << std::endl;
+    }
+
+    fout.close();
+}
+
 blaze::DynamicMatrix<double> training_set::get_input_set(){
     return _input_set;
 }
@@ -115,6 +127,7 @@ frame_data training_set::_parse_frame(fs::path file){
         ("vxr", po::value<double>(), "Real x position")
         ("vyr", po::value<double>(), "Real y position")
         ("vtheta", po::value<double>())
+        ("vpitch", po::value<double>())
 
         ("vdl", po::value<double>())
         ("vda", po::value<double>())
@@ -141,6 +154,7 @@ frame_data training_set::_parse_frame(fs::path file){
     out.x = vm["vxr"].as<double>();
     out.y = vm["vyr"].as<double>();
     out.theta = vm["vtheta"].as<double>();
+    out.pitch = vm["vpitch"].as<double>();
 
     out.v = vm["vdl"].as<double>();
     out.w = vm["vda"].as<double>();

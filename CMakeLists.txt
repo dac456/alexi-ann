@@ -46,4 +46,5 @@ add_executable(alexi-ann ${SRC})
 target_link_libraries(
     alexi-ann
     ${Boost_LIBRARIES}
+    fann
 )

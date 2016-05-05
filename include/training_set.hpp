@@ -5,9 +5,10 @@
 
 struct frame_data{
     double rw, rl;
-    
+
     double x, y;
     double theta;
+    double pitch;
 
     double v;
     double w;
@@ -26,6 +27,8 @@ private:
 
 public:
     training_set(fs::path p);
+
+    void save_fann_data(fs::path file);
 
     blaze::DynamicMatrix<double> get_input_set();
     blaze::DynamicMatrix<double> get_target_set();
