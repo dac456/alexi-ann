@@ -1,5 +1,5 @@
 #include "training_set.hpp"
-#include "../contrib/alphanum.hpp"
+#include "../../contrib/alphanum.hpp"
 
 #include <fstream>
 #include <boost/program_options.hpp>

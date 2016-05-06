@@ -19,7 +19,7 @@ fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_laye
     }
     fann_set_activation_function_layer(_ann, FANN_LINEAR, num_layers - 1);
 
-    fann_set_training_algorithm(_ann, FANN_TRAIN_INCREMENTAL);
+    fann_set_training_algorithm(_ann, FANN_TRAIN_RPROP);
     fann_set_learning_rate(_ann, 0.01);
 
     delete[] layer_dim;
@@ -32,7 +32,7 @@ fann_ffn::~fann_ffn(){
 }
 
 void fann_ffn::train(fs::path file){
-    fann_train_on_file(_ann, file.string().c_str(), 2000, 10, 0.005);
+    fann_train_on_file(_ann, file.string().c_str(), 2000, 0, 0.005);
     fann_save(_ann, "fann.net");
     //fann_destroy(_ann);
 }

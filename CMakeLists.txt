@@ -25,26 +25,15 @@ link_directories(${Boost_LIBRARY_DIRS})
 # Paths
 # -----
 
-include_directories(include)
 include_directories(${BLAZE_DIR})
 
-# -----------------
-# Target: alexi-ann
-# -----------------
+include_directories(${CMAKE_SOURCE_DIR}/libaann/include)
 
-file(GLOB_RECURSE HEADERS ABSOLUTE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS
-    include/*.hpp
-    include/*.h
-    include/*/*.h
-    include/*/*.hpp)
-file(GLOB_RECURSE SRC ABSOLUTE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS
-    src/*.cpp
-    src/*/*.cpp)
 
-add_executable(alexi-ann ${SRC})
+# ------------
+# Sub-Projects
+# ------------
 
-target_link_libraries(
-    alexi-ann
-    ${Boost_LIBRARIES}
-    fann
-)
+add_subdirectory(libaann)
+add_subdirectory(alexi-trainer)
+add_subdirectory(alexi-sim)
