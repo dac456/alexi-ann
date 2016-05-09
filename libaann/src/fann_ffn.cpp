@@ -25,6 +25,10 @@ fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_laye
     delete[] layer_dim;
 }
 
+fann_ffn::fann_ffn(fs::path file){
+    _ann = fann_create_from_file(file.string().c_str());
+}
+
 fann_ffn::~fann_ffn(){
     if(_ann){
         fann_destroy(_ann);

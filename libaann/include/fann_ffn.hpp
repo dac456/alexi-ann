@@ -10,6 +10,7 @@ private:
 
 public:
     fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t hidden_layer_dim);
+    fann_ffn(fs::path file);
     ~fann_ffn();
 
     void train(fs::path file);

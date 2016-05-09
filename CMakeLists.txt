@@ -13,6 +13,29 @@ endif()
 message(${CMAKE_CXX_FLAGS})
 
 
+#
+# Paths
+#
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
+   ${PROJECT_BINARY_DIR}/lib/
+   CACHE PATH
+   "Single Directory for all Libraries"
+)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+   ${PROJECT_BINARY_DIR}/bin/
+   CACHE PATH
+   "Single Directory for all Executables."
+)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
+   ${PROJECT_BINARY_DIR}/lib/
+   CACHE PATH
+   "Single Directory for all static libraries."
+)
+
+
 # ----------
 # Find Boost
 # ----------
