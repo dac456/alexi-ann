@@ -94,6 +94,7 @@ training_set::training_set(fs::path path, TRAINING_TYPE type)
             std::cout << "excluding frame " << i << std::endl;
         }
     }
+    std::cout << _target_set.columns() << std::endl;
 
     /*if(input_vector.size() < target_vector.size()){
         target_vector.resize(input_vector.size());
