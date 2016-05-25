@@ -15,7 +15,7 @@ fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_laye
 
     fann_set_activation_function_layer(_ann, FANN_LINEAR, 0);
     for(size_t i = 1; i < num_layers - 1; i++){
-        fann_set_activation_function_layer(_ann, FANN_SIGMOID, i);
+        fann_set_activation_function_layer(_ann, FANN_LINEAR, i);
     }
     fann_set_activation_function_layer(_ann, FANN_LINEAR, num_layers - 1);
 
@@ -35,9 +35,9 @@ fann_ffn::~fann_ffn(){
     }
 }
 
-void fann_ffn::train(fs::path file){
+void fann_ffn::train(fs::path file, fs::path output_file){
     fann_train_on_file(_ann, file.string().c_str(), 2000, 0, 0.005);
-    fann_save(_ann, "fann.net");
+    fann_save(_ann, output_file.string().c_str());
     //fann_destroy(_ann);
 }
 

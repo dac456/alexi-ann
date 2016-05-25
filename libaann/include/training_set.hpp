@@ -4,16 +4,31 @@
 #include "common.hpp"
 
 struct frame_data{
+    bool warped;
+
     double rw, rl;
 
     double x, y;
+    double dx, dy;
     double theta;
+    double dtheta;
     double pitch;
 
     double v;
     double w;
+    double left;
+    double right;
+    double left_last;
+    double right_last;
 
     int pw, ph;
+};
+
+enum TRAINING_TYPE{
+    DX,
+    DY,
+    DTHETA,
+    ALL
 };
 
 class training_set{
@@ -26,7 +41,7 @@ private:
     frame_data _last_frame;
 
 public:
-    training_set(fs::path p);
+    training_set(fs::path p, TRAINING_TYPE type);
 
     void save_fann_data(fs::path file);
 

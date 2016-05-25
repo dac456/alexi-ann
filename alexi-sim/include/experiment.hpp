@@ -3,11 +3,13 @@
 
 #include <SDL/SDL.h>
 
+#include <map>
 #include <boost/filesystem.hpp>
 namespace fs = boost::filesystem;
 
 #include "terrain.hpp"
 #include "platform.hpp"
+#include "fake_imu.hpp"
 
 #include "fann_ffn.hpp"
 
@@ -15,10 +17,11 @@ class experiment{
 private:
     SDL_Surface* _display;
 
-    std::shared_ptr<fann_ffn> _ann;
+    std::map<std::string, std::shared_ptr<fann_ffn>> _ann;
 
     terrain_ptr _terrain;
     platform_ptr _platform;
+    fake_imu_ptr _imu;
 
     double _scale;
     double _particle_radius;

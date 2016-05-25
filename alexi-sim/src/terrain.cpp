@@ -26,6 +26,11 @@ terrain::terrain(SDL_Surface* display, fs::path map_file, double scale)
         int y_ratio = static_cast<int>((h << 16) / h2) + 1;
         boost::shared_array<unsigned char> temp(new unsigned char[h2 * w2]);
 
+        for(size_t i = 0; i < (w*h); i++){
+            //if(_heights[i] < 128) _heights[i] += 16;
+            //if(_heights[i] > 128) _heights[i] -= 16;
+        }
+
         for(int y = 0; y < h2; y++) {
             for(int x = 0; x < w2; x++) {
                 int x2 = ((x * x_ratio) >> 16) ;
@@ -57,6 +62,13 @@ void terrain::update_pixel_by_delta(size_t x, size_t y, unsigned char delta){
     if(d < 0) d = 0;
 
     _heights[idx] = static_cast<unsigned char>(d);
+}
+
+unsigned char terrain::get_height_at(size_t x, size_t y){
+    size_t mx = x % _width;
+    size_t my = y % _height;
+
+    return _heights[mx + (_width * my)];
 }
 
 int terrain::get_width(){

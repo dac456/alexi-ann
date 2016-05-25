@@ -31,6 +31,8 @@ public:
     void update();
     void update_pixel_by_delta(size_t x, size_t y, unsigned char delta);
 
+    unsigned char get_height_at(size_t x, size_t y);
+
     int get_width();
     int get_height();
     int get_display_width();

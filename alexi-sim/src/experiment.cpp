@@ -52,14 +52,21 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         _terrain = std::make_shared<terrain>(_display, map_file, _scale);
 
         //std::pair<size_t,size_t> vehicle_position = _real_pos_to_pixel_pos(std::make_pair(opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>()));
-        _ann = std::make_shared<fann_ffn>("fann.net");
-        _platform = std::make_shared<platform>(_display, _ann, opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>());
+        _ann["dx"] = std::make_shared<fann_ffn>("fann_dx.net");
+        _ann["dy"] = std::make_shared<fann_ffn>("fann_dy.net");
+        _ann["dtheta"] = std::make_shared<fann_ffn>("fann_dtheta.net");
+        _imu = std::make_shared<fake_imu>(_terrain);
+        _platform = std::make_shared<platform>(_display, _ann, _imu, opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>());
     }
 }
 
 void experiment::step(){
+    if(_imu){
+        _imu->update(_real_pos_to_pixel_pos(std::make_pair(_platform->get_pos_x(), _platform->get_pos_y())));
+    }
+
     if(_platform){
-        _platform->step();
+        _platform->step(_terrain->get_width() * _particle_radius * 2.0, _terrain->get_height() * _particle_radius * 2.0);
     }
 
     if(_terrain){
@@ -69,6 +76,14 @@ void experiment::step(){
     std::pair<double,double> real_pos = std::make_pair(_platform->get_pos_x(), _platform->get_pos_y());
     std::pair<size_t,size_t> plot_pos = _real_pos_to_pixel_pos(real_pos);
     circleRGBA(_display, plot_pos.first, plot_pos.second, 16, 255, 0, 0, 255);
+
+    const double yaw = _platform->get_yaw();
+
+    size_t forward_x = 16;
+    size_t forward_y = 0;
+    size_t forward_rx = forward_x * cos(yaw) - forward_y * sin(yaw);
+    size_t forward_ry = forward_x * sin(yaw) + forward_y * cos(yaw);
+    circleRGBA(_display, plot_pos.first + forward_rx, plot_pos.second + forward_ry, 4, 0, 255, 0, 255);
 
     SDL_Flip(_display);
 }

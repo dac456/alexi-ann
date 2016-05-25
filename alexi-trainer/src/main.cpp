@@ -49,16 +49,27 @@ int main(int argc, char* argv[])
 
     blaze::setNumThreads(vm["nt"].as<int>());
 
-    training_set tset(vm["trainingset"].as<std::string>());
-    std::cout << tset.get_input_set().columns() << std::endl;
-    std::cout << tset.get_target_set().columns() << std::endl;
+    training_set tset_dx(vm["trainingset"].as<std::string>(), DX);
+    tset_dx.save_fann_data("./fann_ffn_dx.data");
 
-    tset.save_fann_data("./fann_ffn.data");
+    training_set tset_dy(vm["trainingset"].as<std::string>(), DY);
+    tset_dy.save_fann_data("./fann_ffn_dy.data");
 
-    fann_ffn test_ffn(4, 2, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
-    test_ffn.train("./fann_ffn.data");
+    training_set tset_dtheta(vm["trainingset"].as<std::string>(), DTHETA);
+    tset_dy.save_fann_data("./fann_ffn_dtheta.data");
 
-    float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};
+    //std::cout << tset_dx.get_input_set().columns().size() << " " << tset_dy.get_input_set().columns().size() << std::endl;
+
+    fann_ffn ffn_dx(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");
+
+    fann_ffn ffn_dy(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net");
+
+    fann_ffn ffn_dtheta(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");
+
+    /*float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};
     float* out = test_ffn.predict(test);
     std::cout << out[0] << " " << out[1] << std::endl;
 
@@ -69,26 +80,12 @@ int main(int argc, char* argv[])
     test_ffn2.set_output_activation_function(linear);
     test_ffn2.set_output_activation_function_dx(linear_dx);
 
-    /*blaze::DynamicMatrix<double> input(2,4);
-    blaze::DynamicMatrix<double> target(2,4);
-
-    column(input, 0) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.0, 2.1);
-    column(target, 0) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.5, 2.7);
-
-    column(input, 1) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.4, 2.6);
-    column(target, 1) = blaze::StaticVector<double, 2UL, blaze::columnVector>(2.3, 2.0);
-
-    column(input, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.4, 3.6);
-    column(target, 2) = blaze::StaticVector<double, 2UL, blaze::columnVector>(3.3, 3.0);
-
-    column(input, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.4, 1.6);
-    column(target, 3) = blaze::StaticVector<double, 2UL, blaze::columnVector>(1.7, 1.1);*/
 
     std::cout << "Training..." << std::endl;
     test_ffn2.train(tset.get_input_set(), tset.get_target_set());
 
     std::cout << "Predicting..." << std::endl;
-    std::cout << test_ffn2.predict(blaze::StaticVector<double,4UL,blaze::columnVector>(-21.3466f, -0.245896f, 2.0f, -1.57f)) << std::endl;
+    std::cout << test_ffn2.predict(blaze::StaticVector<double,4UL,blaze::columnVector>(-21.3466f, -0.245896f, 2.0f, -1.57f)) << std::endl;*/
     //std::cout << test_ffn.predict(blaze::StaticVector<double,5UL,blaze::columnVector>(20, 100, -0.0156063, 2.0, 0.0)) << std::endl;
 
     return 0;

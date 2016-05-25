@@ -1,6 +1,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
+#include <chrono>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
@@ -36,8 +37,9 @@ int main(int argc, char* argv[]){
 
         experiment expr(surf, vm["experiment"].as<std::string>());
         resize_window(surf, expr.get_terrain()->get_display_width(), expr.get_terrain()->get_display_height());
+        std::cout << expr.get_terrain()->get_display_width() << " " << expr.get_terrain()->get_display_height() << std::endl;
 
-
+        std::chrono::steady_clock::time_point last_time = std::chrono::steady_clock::now();
         while(running){
             while(SDL_PollEvent(&evt)){
                 if(evt.type == SDL_QUIT){
@@ -45,7 +47,10 @@ int main(int argc, char* argv[]){
                 }
             }
 
-            expr.step();
+            if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_time) >= std::chrono::milliseconds(33)){
+                expr.step();
+                last_time = std::chrono::steady_clock::now();
+            }
         }
 
     }

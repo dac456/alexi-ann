@@ -5,7 +5,7 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
-training_set::training_set(fs::path path)
+training_set::training_set(fs::path path, TRAINING_TYPE type)
     : _set_path(path)
 {
     std::vector<std::string> frames;
@@ -21,7 +21,7 @@ training_set::training_set(fs::path path)
 
     }
 
-    if(frames.size() % 2 != 0){
+    /*if(frames.size() % 2 != 0){
         frames.pop_back();
     }
 
@@ -30,37 +30,54 @@ training_set::training_set(fs::path path)
     if(set_size % 2 != 0){
         set_size -= 1;
         num_frames -= 2;
-    }
+    }*/
 
-    _input_set.resize(4, set_size);
-    _target_set.resize(2, set_size);
+    _input_set.resize(3, frames.size());
+    _target_set.resize(1, frames.size());
     //std::vector< blaze::StaticVector<double, 2UL, blaze::columnVector> > input_vector;
     //std::vector< blaze::StaticVector<double, 2UL, blaze::columnVector> > target_vector;
 
     size_t ij = 0;
     size_t tj = 0;
     bool assign_as_input = true;
-    for(size_t i = 0; i < num_frames; i++){
+    for(size_t i = 0; i < frames.size(); i++){
         frame_data data = _parse_frame(frames[i]);
+        if(!data.warped){
+            switch(type){
+                case DX:
+                column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
+                column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dx);
+                break;
+
+                case DY:
+                column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
+                column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dy);
+                break;
+
+                case DTHETA:
+                column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
+                column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dtheta);
+                break;
+            }
     //    if(i > 0){
     //        if(data.x == _last_frame.x && data.y == _last_frame.y){
     //            i++;
     //        }
     //        else{
 
-                if(assign_as_input){
-                    column(_input_set, ij) = blaze::StaticVector<double, 4UL, blaze::columnVector>(data.x, data.y, data.v, data.w);
+                //if(assign_as_input){
+                    //column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
                     //input_vector.push_back(blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y));
-                    ij++;
+                //    ij++;
                     //i++;
-                    assign_as_input = false;
-                }
-                else{
-                    column(_target_set, tj) = blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y);
+                //    assign_as_input = false;
+                //}
+                //else{
+                    //column(_target_set, i) = blaze::StaticVector<double, 2UL, blaze::columnVector>(data.dx, data.dy);
                     //target_vector.push_back(blaze::StaticVector<double, 2UL, blaze::columnVector>(data.x, data.y));
-                    tj++;
-                    assign_as_input = true;
-                }
+                //    tj++;
+                //    assign_as_input = true;
+                //}
         //    }
         //}
         //else{
@@ -72,6 +89,10 @@ training_set::training_set(fs::path path)
         //}
 
         //_last_frame = data;
+        }
+        else{
+            std::cout << "excluding frame " << i << std::endl;
+        }
     }
 
     /*if(input_vector.size() < target_vector.size()){
@@ -94,10 +115,10 @@ training_set::training_set(fs::path path)
 void training_set::save_fann_data(fs::path file){
     std::ofstream fout(file.string());
 
-    fout << _input_set.columns() << " 4 2" << std::endl;
+    fout << _input_set.columns() << " 3 1" << std::endl;
     for(size_t i = 0; i < _input_set.columns(); i++){
-        fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << std::endl;
-        fout << _target_set(0,i) << " " << _target_set(1,i) << std::endl;
+        fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) /*<< " " << _input_set(3,i)*/ << std::endl;
+        fout << _target_set(0,i) /*<< " " << _target_set(1,i)*/ << std::endl;
     }
 
     fout.close();
@@ -126,11 +147,20 @@ frame_data training_set::_parse_frame(fs::path file){
         ("vy", po::value<int>(), "Pixel-space y position")
         ("vxr", po::value<double>(), "Real x position")
         ("vyr", po::value<double>(), "Real y position")
+        ("vdxr", po::value<double>(), "Real x position delta")
+        ("vdyr", po::value<double>(), "Real y position delta")
         ("vtheta", po::value<double>())
+        ("vdtheta", po::value<double>())
         ("vpitch", po::value<double>())
 
         ("vdl", po::value<double>())
         ("vda", po::value<double>())
+
+        ("vleft", po::value<double>())
+        ("vright", po::value<double>())
+        ("vleftlast", po::value<double>())
+        ("vrightlast", po::value<double>())
+
 
         ("gx1x", po::value<int>())
         ("gx1y", po::value<int>())
@@ -148,16 +178,25 @@ frame_data training_set::_parse_frame(fs::path file){
     po::notify(vm);
 
     frame_data out;
+    out.warped = vm["warped"].as<bool>();
+
     out.rw = vm["rw"].as<double>();
     out.rl = vm["rl"].as<double>();
 
     out.x = vm["vxr"].as<double>();
     out.y = vm["vyr"].as<double>();
+    out.dx = vm["vdxr"].as<double>();
+    out.dy = vm["vdyr"].as<double>();
     out.theta = vm["vtheta"].as<double>();
-    out.pitch = vm["vpitch"].as<double>();
+    out.dtheta = vm["vdtheta"].as<double>();
+    //out.pitch = vm["vpitch"].as<double>();
+    out.pitch = 0.0;
 
     out.v = vm["vdl"].as<double>();
     out.w = vm["vda"].as<double>();
+
+    out.left = vm["vleft"].as<double>();
+    out.right = vm["vright"].as<double>();
 
     out.pw = vm["rw"].as<double>() / vm["dppx"].as<double>();
     out.ph = vm["rl"].as<double>() / vm["dppy"].as<double>();
