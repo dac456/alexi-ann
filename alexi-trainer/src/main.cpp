@@ -1,5 +1,6 @@
 #include "ffn.hpp"
 #include "fann_ffn.hpp"
+#include "data_preprocessor.hpp"
 #include "training_set.hpp"
 
 #include <random>
@@ -49,7 +50,7 @@ int main(int argc, char* argv[])
 
     blaze::setNumThreads(vm["nt"].as<int>());
 
-    training_set tset_dx(vm["trainingset"].as<std::string>(), DX);
+    /*training_set tset_dx(vm["trainingset"].as<std::string>(), DX);
     tset_dx.save_fann_data("./fann_ffn_dx.data");
 
     training_set tset_dy(vm["trainingset"].as<std::string>(), DY);
@@ -59,6 +60,27 @@ int main(int argc, char* argv[])
     tset_dy.save_fann_data("./fann_ffn_dtheta.data");
 
     //std::cout << tset_dx.get_input_set().columns().size() << " " << tset_dy.get_input_set().columns().size() << std::endl;
+
+    fann_ffn ffn_dx(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");
+
+    fann_ffn ffn_dy(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net");
+
+    fann_ffn ffn_dtheta(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");*/
+    data_preprocessor preproc(vm["trainingset"].as<std::string>());
+    preproc.run_processor(AVERAGE);
+    //preproc.run_processor(THRESHOLD);
+
+    training_set tset_dx(preproc.get_frames(), DX);
+    tset_dx.save_fann_data("./fann_ffn_dx.data");
+
+    training_set tset_dy(preproc.get_frames(), DY);
+    tset_dy.save_fann_data("./fann_ffn_dy.data");
+
+    training_set tset_dtheta(preproc.get_frames(), DTHETA);
+    tset_dtheta.save_fann_data("./fann_ffn_dtheta.data");
 
     fann_ffn ffn_dx(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
     ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");

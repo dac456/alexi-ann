@@ -35,7 +35,7 @@ void platform::step(double width, double height){
         else if(r >= 0.25 && r < 0.5) _desired_angular_velocity = (-1.57);
         else if(r > 0.75) _desired_angular_velocity = (0.0f);
     }*/
-    _desired_linear_velocity = 1.3f;
+    _desired_linear_velocity = -1.1f;
     _desired_angular_velocity = 0.0f;
 
     std::cout << "pitch: " << _imu->get_accel_pitch() << std::endl;
@@ -45,11 +45,14 @@ void platform::step(double width, double height){
     float* out_dy = _ann["dy"]->predict(in);
     float* out_dtheta = _ann["dtheta"]->predict(in);
 
-    if(out_dtheta[0] < 0) std::cout << "neg theta" << std::endl;
+    float speed = sqrt( pow(out_dx[0], 2.0) + pow(out_dy[0], 2.0) );
+    if(_desired_linear_velocity < 0.0f){
+        speed *= -1.0f;
+    }
 
-    _pos_x += out_dx[0];
-    _pos_y += out_dy[0];
     _yaw += out_dtheta[0];
+    _pos_x += speed*cos(_yaw);
+    _pos_y += speed*sin(_yaw);
 
     if(_pos_x > width * 0.5){
         _pos_x -= width;
