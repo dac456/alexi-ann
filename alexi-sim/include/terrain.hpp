@@ -29,7 +29,7 @@ public:
     terrain(SDL_Surface* display, fs::path map_file, double scale);
 
     void update();
-    void update_pixel_by_delta(size_t x, size_t y, unsigned char delta);
+    void update_pixel_by_delta(size_t x, size_t y, int delta);
 
     unsigned char get_height_at(size_t x, size_t y);
 

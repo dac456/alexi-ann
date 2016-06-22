@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(alexi-ann)
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fopenmp -O3 -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fopenmp -O0 -ggdb -march=native")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     #Clang does not support OMP, so use C++ threads
     add_definitions( -DBLAZE_USE_CPP_THREADS )

@@ -55,6 +55,7 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         _ann["dx"] = std::make_shared<fann_ffn>("fann_dx.net");
         _ann["dy"] = std::make_shared<fann_ffn>("fann_dy.net");
         _ann["dtheta"] = std::make_shared<fann_ffn>("fann_dtheta.net");
+        _ann["terrain"] = std::make_shared<fann_ffn>("fann_terrain.net");
         _imu = std::make_shared<fake_imu>(_terrain);
         _platform = std::make_shared<platform>(_display, _ann, _imu, opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>());
     }
@@ -69,12 +70,34 @@ void experiment::step(){
         _platform->step(_terrain->get_width() * _particle_radius * 2.0, _terrain->get_height() * _particle_radius * 2.0);
     }
 
+    std::pair<double,double> real_pos = std::make_pair(_platform->get_pos_x(), _platform->get_pos_y());
+    std::pair<size_t,size_t> plot_pos = _real_pos_to_pixel_pos(real_pos);
+
     if(_terrain){
+        float* in = _platform->get_last_input();
+        if(in){
+            float* out_terrain = _ann["terrain"]->predict(in);
+            if(out_terrain){
+                int px = plot_pos.first;
+                int py = plot_pos.second;
+                int start_x = (px - 8);
+                int start_y = (py - 8);
+                std::cout << px << " " << start_x << std::endl;
+
+                size_t idx = 0;
+                for(size_t i = 0; i < 16; i++){
+                    size_t y = (start_y + i) % _terrain->get_display_height();
+                    for(size_t j = 0; j < 16; j++){
+                        size_t x = (start_x + j) % _terrain->get_display_width();
+                        _terrain->update_pixel_by_delta(x, y, static_cast<int>(255.0f*out_terrain[idx]));
+                        idx++;
+                    }
+                }
+            }
+        }
         _terrain->update();
     }
 
-    std::pair<double,double> real_pos = std::make_pair(_platform->get_pos_x(), _platform->get_pos_y());
-    std::pair<size_t,size_t> plot_pos = _real_pos_to_pixel_pos(real_pos);
     circleRGBA(_display, plot_pos.first, plot_pos.second, 16, 255, 0, 0, 255);
 
     const double yaw = _platform->get_yaw();

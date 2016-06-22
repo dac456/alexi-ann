@@ -35,7 +35,7 @@ void platform::step(double width, double height){
         else if(r >= 0.25 && r < 0.5) _desired_angular_velocity = (-1.57);
         else if(r > 0.75) _desired_angular_velocity = (0.0f);
     }*/
-    _desired_linear_velocity = -1.1f;
+    _desired_linear_velocity = 2.0f;
     _desired_angular_velocity = 0.0f;
 
     std::cout << "pitch: " << _imu->get_accel_pitch() << std::endl;
@@ -68,6 +68,7 @@ void platform::step(double width, double height){
     }
 
     _move();
+    _last_input = in;
 }
 
 void platform::_move(){
@@ -93,4 +94,8 @@ double platform::get_yaw(){
 bool platform::is_inclined(){
     if(fabs((_imu->get_accel_pitch()*180.0) / M_PI) > 20.0) return true;
     else return false;
+}
+
+float* platform::get_last_input(){
+    return _last_input;
 }

@@ -52,8 +52,10 @@ namespace po = boost::program_options;
     std::cout << _target_set.columns() << std::endl;
 }*/
 
-training_set::training_set(std::vector<frame_data> frames, TRAINING_TYPE type)
+training_set::training_set(std::vector<frame_data> frames, std::vector<std::array<double,256>> diff_images, TRAINING_TYPE type)
     : _frames(frames)
+    , _diff_images(diff_images)
+    , _type(type)
 {
     _input_set.resize(3, frames.size());
 
@@ -64,33 +66,47 @@ training_set::training_set(std::vector<frame_data> frames, TRAINING_TYPE type)
         _target_set.resize(1, frames.size());
         break;
 
+        case TERRAIN:
+        _target_set.resize(256, diff_images.size());
+        break;
+
         case ALL:
         _target_set.resize(3, frames.size());
         break;
     }
 
-    for(size_t i = 0; i < _frames.size(); i++){
-        frame_data data = _frames[i];
-        if(!data.warped){
+    if(_type != TERRAIN){
+        for(size_t i = 0; i < _frames.size(); i++){
+            frame_data data = _frames[i];
+            column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
+
             switch(type){
                 case DX:
-                column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dx);
                 break;
 
                 case DY:
-                column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dy);
                 break;
 
                 case DTHETA:
-                column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dtheta);
                 break;
             }
         }
-        else{
-            std::cout << "excluding frame " << i << std::endl;
+    }
+    else{
+        for(size_t i = 0; i < _diff_images.size(); i++){
+            frame_data data = _frames[i];
+            column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
+
+            switch(type){
+                case TERRAIN:
+                for(int y = 0; y < 256; y++){
+                    _target_set(y,i) = _diff_images[i][y];
+                }
+                break;
+            }
         }
     }
     std::cout << "Set size: " << _target_set.columns() << std::endl;
@@ -99,10 +115,22 @@ training_set::training_set(std::vector<frame_data> frames, TRAINING_TYPE type)
 void training_set::save_fann_data(fs::path file){
     std::ofstream fout(file.string());
 
-    fout << _input_set.columns() << " 3 1" << std::endl;
-    for(size_t i = 0; i < _input_set.columns(); i++){
-        fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) /*<< " " << _input_set(3,i)*/ << std::endl;
-        fout << _target_set(0,i) /*<< " " << _target_set(1,i)*/ << std::endl;
+    if(_type != TERRAIN){
+        fout << _input_set.columns() << " 3 1" << std::endl;
+        for(size_t i = 0; i < _input_set.columns(); i++){
+            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) /*<< " " << _input_set(3,i)*/ << std::endl;
+            fout << _target_set(0,i) /*<< " " << _target_set(1,i)*/ << std::endl;
+        }
+    }
+    else{
+        fout << _input_set.columns() << " 3 256" << std::endl;
+        for(size_t i = 0; i < _input_set.columns(); i++){
+            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) /*<< " " << _input_set(3,i)*/ << std::endl;
+            for(size_t r = 0; r < _target_set.rows(); r++){
+                fout << _target_set(r,i) << " ";
+            }
+            fout << std::endl;
+        }
     }
 
     fout.close();

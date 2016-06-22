@@ -12,12 +12,14 @@ enum PREPROCESSOR{
 class data_preprocessor{
 private:
     std::vector<frame_data> _frames;
+    std::vector<std::array<double,256>> _diff_images;
 
 public:
     data_preprocessor(fs::path set_path);
 
     void run_processor(PREPROCESSOR proc_type);
     std::vector<frame_data> get_frames();
+    std::vector<std::array<double,256>> get_diff_images();
 
 private:
     void _average_frames(size_t block_size);

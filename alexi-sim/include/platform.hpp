@@ -26,6 +26,7 @@ private:
     double _desired_angular_velocity;
     double _left;
     double _right;
+    float* _last_input;
 
 public:
     platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<fann_ffn>> ann, fake_imu_ptr imu, double init_x, double init_y);
@@ -37,6 +38,8 @@ public:
     double get_yaw();
 
     bool is_inclined();
+
+    float* get_last_input();
 
 private:
     void _move();

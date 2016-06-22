@@ -1,6 +1,6 @@
 #include "fann_ffn.hpp"
 
-fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t hidden_layer_dim)
+fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t hidden_layer_dim, fann_activationfunc_enum act)
     : _ann(nullptr)
 {
     size_t num_layers = num_hidden_layers + 2;
@@ -15,7 +15,7 @@ fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_laye
 
     fann_set_activation_function_layer(_ann, FANN_LINEAR, 0);
     for(size_t i = 1; i < num_layers - 1; i++){
-        fann_set_activation_function_layer(_ann, FANN_LINEAR, i);
+        fann_set_activation_function_layer(_ann, act, i);
     }
     fann_set_activation_function_layer(_ann, FANN_LINEAR, num_layers - 1);
 
