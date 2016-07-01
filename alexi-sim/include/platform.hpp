@@ -26,6 +26,8 @@ private:
     double _desired_angular_velocity;
     double _left;
     double _right;
+    double _last_dx;
+    double _last_dy;
     float* _last_input;
 
 public:

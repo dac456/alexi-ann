@@ -5,8 +5,11 @@
 
 #include <random>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
 
 double sigmoid(double value){
     return 1.0 / (1.0 + exp(-value));
@@ -69,7 +72,15 @@ int main(int argc, char* argv[])
 
     fann_ffn ffn_dtheta(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
     ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");*/
-    data_preprocessor preproc(vm["trainingset"].as<std::string>());
+    std::vector<fs::path> set_paths;
+    std::vector<std::string> set_paths_str;
+    boost::split(set_paths_str, vm["trainingset"].as<std::string>(), boost::is_any_of(":"));
+    for(auto path : set_paths_str){
+        std::cout << path << std::endl;
+        set_paths.push_back(fs::path(path));
+    }
+
+    data_preprocessor preproc(set_paths);
     preproc.run_processor(AVERAGE);
     //preproc.run_processor(THRESHOLD);
 
@@ -85,16 +96,16 @@ int main(int argc, char* argv[])
     training_set tset_terrain(preproc.get_frames(), preproc.get_diff_images(), TERRAIN);
     tset_terrain.save_fann_data("./fann_ffn_terrain.data");
 
-    fann_ffn ffn_dx(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    fann_ffn ffn_dx(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
     ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");
 
-    fann_ffn ffn_dy(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    fann_ffn ffn_dy(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
     ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net");
 
-    fann_ffn ffn_dtheta(3, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    fann_ffn ffn_dtheta(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID);
     ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");
 
-    fann_ffn ffn_terrain(3, 256, 2, 384, FANN_SIGMOID);
+    fann_ffn ffn_terrain(5, 256, 6, 64, FANN_SIGMOID);
     ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");
 
     /*float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};

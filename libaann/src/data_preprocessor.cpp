@@ -7,82 +7,103 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
-data_preprocessor::data_preprocessor(fs::path set_path){
-    std::vector<std::string> frames;
-    if(fs::is_directory(set_path)){
-        fs::directory_iterator itr{set_path};
-        while(itr != fs::directory_iterator{}){
-            frames.push_back((*itr++).path().string());
-        }
+data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
+    for(auto set_path : set_paths){
+        std::cout << "Processing path " << set_path.string() << "..." << std::endl;
 
-        std::sort(frames.begin(), frames.end(), doj::alphanum_less<std::string>());
-    }
-    else{
+        std::vector<std::string> frames;
+        if(fs::is_directory(set_path)){
+            fs::directory_iterator itr{set_path};
+            while(itr != fs::directory_iterator{}){
+                fs::path frame_path = (*itr++).path();
+                std::cout << "Adding frame " << frame_path.filename().string() << "..." << std::endl;
+                frames.push_back(frame_path.string());
+            }
 
-    }
-
-    std::vector<std::string> images;
-    fs::path raygrid_path = set_path / "../diff/";
-    if(fs::is_directory(raygrid_path)){
-        fs::directory_iterator itr{raygrid_path};
-        while(itr != fs::directory_iterator{}){
-            images.push_back(fs::canonical((*itr++).path()).string());
-        }
-
-        std::sort(images.begin(), images.end(), doj::alphanum_less<std::string>());
-    }
-
-    for(size_t i = 0; i < frames.size(); i++){
-        frame_data data = _parse_frame(frames[i]);
-        if(!data.warped){
-            _frames.push_back(data);
+            std::sort(frames.begin(), frames.end(), doj::alphanum_less<std::string>());
         }
         else{
-            std::cout << "excluding frame " << i << std::endl;
+
         }
-    }
 
-    std::array<double,256> zero;
-    zero.fill(0.0);
-    _diff_images.push_back(zero);
-
-    for(size_t i = 1; i < images.size(); i++){
-        frame_data data = _parse_frame(frames[i]);
-        if(!data.warped){
-            //TODO: correct order?
-            size_t w = data.rw / data.dppx;
-            size_t h = data.rl / data.dppy;
-
-            std::ifstream fin(images[i], std::ios::in);
-            std::vector<double> values;
-            while(!fin.eof()){
-                double v;
-                fin >> v;
-                values.push_back(v);
+        std::vector<std::string> images;
+        fs::path raygrid_path = set_path / "../diff/";
+        if(fs::is_directory(raygrid_path)){
+            fs::directory_iterator itr{raygrid_path};
+            while(itr != fs::directory_iterator{}){
+                fs::path img_path = (*itr++).path();
+                std::cout << "Adding image " << img_path.filename().string() << "..." << std::endl;
+                images.push_back(fs::canonical(img_path).string());
             }
-            fin.close();
 
-            int px = data.px;
-            int py = data.py;
-            int start_x = (px - 8);
-            int start_y = (py - 8);
+            std::sort(images.begin(), images.end(), doj::alphanum_less<std::string>());
+        }
 
-            std::array<double,256> img;
-            img.fill(0.0);
+        for(size_t i = 0; i < frames.size(); i++){
+            std::cout << "Parsing frame " << frames[i] << "..." << std::endl;
+            frame_data data = _parse_frame(frames[i]);
+            if(i == 0){
+                data.dx_last = 0.0;
+                data.dy_last = 0.0;
+            }
+            else{
+                data.dx_last = _frames[i-1].dx;
+                data.dy_last = _frames[i-1].dy;
+            }
+            if(!data.warped){
+                _frames.push_back(data);
+            }
+            else{
+                std::cout << "excluding frame " << i << " from path " << set_path.string() <<  std::endl;
+            }
+        }
 
-            size_t idx = 0;
-            for(size_t i = 0; i < 16; i++){
-                size_t y = (start_y + i) % h;
-                for(size_t j = 0; j < 16; j++){
-                    size_t x = (start_x + j) % w;
-                    img[idx] = values[x + (w * y)];
-                    idx++;
+        std::array<double,256> zero;
+        zero.fill(0.0);
+        _diff_images.push_back(zero);
+
+        //#pragma omp parallel for
+        for(size_t i = 1; i < images.size(); i++){
+            std::cout << "Processing image " << images[i] << "..." << std::endl;
+
+            frame_data data = _parse_frame(frames[i]);
+            if(!data.warped){
+                //TODO: correct order?
+                size_t w = data.rw / data.dppx;
+                size_t h = data.rl / data.dppy;
+
+                std::ifstream fin(images[i], std::ios::in);
+                std::vector<double> values;
+                while(!fin.eof()){
+                    double v;
+                    fin >> v;
+                    values.push_back(v);
                 }
+                fin.close();
+
+                int px = data.px;
+                int py = data.py;
+                int start_x = (px - 8);
+                int start_y = (py - 8);
+
+                std::array<double,256> img;
+                img.fill(0.0);
+
+                size_t idx = 0;
+                #pragma omp parallel for
+                for(size_t i = 0; i < 16; i++){
+                    size_t y = (start_y + i) % h;
+                    for(size_t j = 0; j < 16; j++){
+                        size_t x = (start_x + j) % w;
+                        img[idx] = values[x + (w * y)];
+                        idx++;
+                    }
+                }
+                _diff_images.push_back(img);
             }
-            _diff_images.push_back(img);
-        }
-        else{
-            std::cout << "excluding frame image " << i << std::endl;
+            else{
+                std::cout << "excluding frame image " << i << " from path " << set_path.string() << std::endl;
+            }
         }
     }
 }
@@ -90,7 +111,7 @@ data_preprocessor::data_preprocessor(fs::path set_path){
 void data_preprocessor::run_processor(PREPROCESSOR proc_type){
     switch(proc_type){
         case AVERAGE:
-        _average_frames(5);
+        _average_frames(10);
         break;
 
         case THRESHOLD:
@@ -116,18 +137,26 @@ void data_preprocessor::_average_frames(size_t block_size){
 
         double avg_dx = 0.0;
         double avg_dy = 0.0;
+        double avg_dx_last = 0.0;
+        double avg_dy_last = 0.0;
         double avg_dtheta = 0.0;
         for(size_t j = i; j < i + block_size; j++){
             avg_dx += _frames[j].dx;
             avg_dy += _frames[j].dy;
+            avg_dx_last += _frames[j].dx_last;
+            avg_dy_last += _frames[j].dy_last;
             avg_dtheta += _frames[j].dtheta;
         }
         avg_dx /= static_cast<double>(block_size);
         avg_dy /= static_cast<double>(block_size);
+        avg_dx_last /= static_cast<double>(block_size);
+        avg_dy_last /= static_cast<double>(block_size);
         avg_dtheta /= static_cast<double>(block_size);
 
         f.dx = avg_dx;
         f.dy = avg_dy;
+        f.dx_last = avg_dx_last;
+        f.dy_last = avg_dy_last;
         f.dtheta = avg_dtheta;
 
         new_frames.push_back(f);
@@ -137,7 +166,7 @@ void data_preprocessor::_average_frames(size_t block_size){
 
     //average image deltas
     std::vector<std::array<double,256>> new_img;
-    
+
     for(size_t i = 0; i < _diff_images.size(); i += block_size){
         std::array<double,256> avg;
         avg.fill(0.0);

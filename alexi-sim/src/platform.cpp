@@ -16,6 +16,8 @@ platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<fann
     , _pos_y(init_y)
     , _yaw(0.0)
     , _left(0.0)
+    , _last_dx(0.0)
+    , _last_dy(0.0)
     , _right(0.0)
 {
 }
@@ -40,10 +42,12 @@ void platform::step(double width, double height){
 
     std::cout << "pitch: " << _imu->get_accel_pitch() << std::endl;
     std::cout << _left << " " << _right << std::endl;
-    float in[3] = {_left, _right, _imu->get_accel_pitch()};
+    float in[5] = {_left, _right, _imu->get_accel_pitch(), _last_dx, _last_dy};
     float* out_dx = _ann["dx"]->predict(in);
     float* out_dy = _ann["dy"]->predict(in);
     float* out_dtheta = _ann["dtheta"]->predict(in);
+    _last_dx = out_dx[0];
+    _last_dy = out_dy[0];
 
     float speed = sqrt( pow(out_dx[0], 2.0) + pow(out_dy[0], 2.0) );
     if(_desired_linear_velocity < 0.0f){

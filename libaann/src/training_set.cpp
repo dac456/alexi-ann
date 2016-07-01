@@ -57,7 +57,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     , _diff_images(diff_images)
     , _type(type)
 {
-    _input_set.resize(3, frames.size());
+    _input_set.resize(5, frames.size());
 
     switch(type){
         case DX:
@@ -78,7 +78,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     if(_type != TERRAIN){
         for(size_t i = 0; i < _frames.size(); i++){
             frame_data data = _frames[i];
-            column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
+            column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.dx_last, data.dy_last);
 
             switch(type){
                 case DX:
@@ -98,7 +98,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     else{
         for(size_t i = 0; i < _diff_images.size(); i++){
             frame_data data = _frames[i];
-            column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
+            column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.dx_last, data.dy_last);
 
             switch(type){
                 case TERRAIN:
@@ -116,16 +116,16 @@ void training_set::save_fann_data(fs::path file){
     std::ofstream fout(file.string());
 
     if(_type != TERRAIN){
-        fout << _input_set.columns() << " 3 1" << std::endl;
+        fout << _input_set.columns() << " 5 1" << std::endl;
         for(size_t i = 0; i < _input_set.columns(); i++){
-            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) /*<< " " << _input_set(3,i)*/ << std::endl;
+            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << " " << _input_set(4,i) << std::endl;
             fout << _target_set(0,i) /*<< " " << _target_set(1,i)*/ << std::endl;
         }
     }
     else{
-        fout << _input_set.columns() << " 3 256" << std::endl;
+        fout << _input_set.columns() << " 5 256" << std::endl;
         for(size_t i = 0; i < _input_set.columns(); i++){
-            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) /*<< " " << _input_set(3,i)*/ << std::endl;
+            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << " " << _input_set(4,i) << std::endl;
             for(size_t r = 0; r < _target_set.rows(); r++){
                 fout << _target_set(r,i) << " ";
             }

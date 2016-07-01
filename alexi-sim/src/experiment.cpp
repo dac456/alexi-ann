@@ -82,13 +82,24 @@ void experiment::step(){
                 int py = plot_pos.second;
                 int start_x = (px - 8);
                 int start_y = (py - 8);
-                std::cout << px << " " << start_x << std::endl;
 
                 size_t idx = 0;
                 for(size_t i = 0; i < 16; i++){
-                    size_t y = (start_y + i) % _terrain->get_display_height();
+                    int y = (start_y + i) /*% _terrain->get_display_height()*/;
+                    if(y < 0){
+                        y = _terrain->get_display_height() + y;
+                    }
+                    else if(y >= _terrain->get_display_height()){
+                        y = y - _terrain->get_display_height();
+                    }
                     for(size_t j = 0; j < 16; j++){
-                        size_t x = (start_x + j) % _terrain->get_display_width();
+                        int x = (start_x + j) /*% _terrain->get_display_width()*/;
+                        if(x < 0){
+                            x = _terrain->get_display_width() + x;
+                        }
+                        else if(x >= _terrain->get_display_width()){
+                            x = x - _terrain->get_display_width();
+                        }
                         _terrain->update_pixel_by_delta(x, y, static_cast<int>(255.0f*out_terrain[idx]));
                         idx++;
                     }

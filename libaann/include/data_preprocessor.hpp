@@ -15,7 +15,7 @@ private:
     std::vector<std::array<double,256>> _diff_images;
 
 public:
-    data_preprocessor(fs::path set_path);
+    data_preprocessor(std::vector<fs::path> set_paths);
 
     void run_processor(PREPROCESSOR proc_type);
     std::vector<frame_data> get_frames();

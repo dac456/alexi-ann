@@ -12,6 +12,7 @@ struct frame_data{
     double x, y;
     double px, py;
     double dx, dy;
+    double dx_last, dy_last;
     double theta;
     double dtheta;
     double pitch;

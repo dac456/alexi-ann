@@ -36,6 +36,7 @@ fann_ffn::~fann_ffn(){
 }
 
 void fann_ffn::train(fs::path file, fs::path output_file){
+    //fann_init_weights(_ann, fann_read_train_from_file(file.string().c_str()));
     fann_train_on_file(_ann, file.string().c_str(), 2000, 0, 0.005);
     fann_save(_ann, output_file.string().c_str());
     //fann_destroy(_ann);
