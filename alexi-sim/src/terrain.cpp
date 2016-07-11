@@ -53,10 +53,13 @@ void terrain::update_pixel_by_delta(size_t x, size_t y, int delta){
     size_t idx = x + (_display_width * y);
     int d = _heights[idx] + delta;
 
-    if(d > 255) d = 255;
+    /*if(d > 255) d = 255;
     if(d < 0) d = 0;
 
-    _heights[idx] = static_cast<unsigned char>(d);
+    _heights[idx] = static_cast<unsigned char>(d);*/
+    if((d < 255) && (d > 0)){
+        _heights[idx] = static_cast<unsigned char>(d);
+    }
 }
 
 unsigned char terrain::get_height_at(size_t x, size_t y){

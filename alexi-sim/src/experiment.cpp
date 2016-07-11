@@ -8,6 +8,7 @@ namespace po = boost::program_options;
 
 experiment::experiment(SDL_Surface* disp, fs::path cfg)
     : _display(disp)
+    , _last_terrain_update(nullptr)
 {
     fs::path full_cfg_path = fs::canonical(cfg);
 
@@ -63,7 +64,7 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
 
 void experiment::step(){
     if(_imu){
-        _imu->update(_real_pos_to_pixel_pos(std::make_pair(_platform->get_pos_x(), _platform->get_pos_y())));
+        _imu->update(_real_pos_to_pixel_pos(std::make_pair(_platform->get_pos_x(), _platform->get_pos_y())), _platform->get_yaw());
     }
 
     if(_platform){
@@ -76,12 +77,47 @@ void experiment::step(){
     if(_terrain){
         float* in = _platform->get_last_input();
         if(in){
+            float inTerrain[262];
+            for(size_t i = 0; i < 6; i++) inTerrain[i] = in[i];
+            
+            if(_last_terrain_update == nullptr){
+                for(size_t i = 6; i < 262; i++) inTerrain[i] = 0.0f;
+            }
+            else{
+                for(size_t i = 6; i < 262; i++) inTerrain[i] = _last_terrain_update[i-6];
+            }
+
             float* out_terrain = _ann["terrain"]->predict(in);
             if(out_terrain){
+                _last_terrain_update = out_terrain;
+
                 int px = plot_pos.first;
                 int py = plot_pos.second;
                 int start_x = (px - 8);
                 int start_y = (py - 8);
+
+                #pragma omp parallel for
+                for(size_t wy = 0; wy < 4; wy++){
+                    #pragma omp parallel for
+                    for(size_t wx = 0; wx < 4; wx++){
+
+                        float avg = 0.0f;
+                        float c = 0.0f;
+                        for(size_t y = wy*4; y < (wy*4) + 4; y++){
+                            for(size_t x = wx*4; x < (wx*4) + 4; x++){
+                                avg += out_terrain[x + (y * 16)];
+                                c += 1.0f;
+                            }
+                        }
+                        avg /= c;
+
+                        for(size_t y = wy*4; y < (wy*4) + 4; y++){
+                            for(size_t x = wx*4; x < (wx*4) + 4; x++){
+                                out_terrain[x + (y * 16)] = avg;
+                            }
+                        }
+                    }
+                }
 
                 size_t idx = 0;
                 for(size_t i = 0; i < 16; i++){

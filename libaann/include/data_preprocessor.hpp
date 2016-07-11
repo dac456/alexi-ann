@@ -12,6 +12,7 @@ enum PREPROCESSOR{
 class data_preprocessor{
 private:
     std::vector<frame_data> _frames;
+    std::vector<std::array<double,256>> _images;
     std::vector<std::array<double,256>> _diff_images;
 
 public:
@@ -19,9 +20,12 @@ public:
 
     void run_processor(PREPROCESSOR proc_type);
     std::vector<frame_data> get_frames();
+    std::vector<std::array<double,256>> get_images();
     std::vector<std::array<double,256>> get_diff_images();
 
 private:
+    int _wrap_value(int value, int size);
+
     void _average_frames(size_t block_size);
     void _threshold_frames(double interval);
 

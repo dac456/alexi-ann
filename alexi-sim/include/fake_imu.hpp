@@ -10,11 +10,12 @@ private:
 
     size_t _pixel_pos_x;
     size_t _pixel_pos_y;
+    double _yaw;
 
 public:
     fake_imu(terrain_ptr terrain);
 
-    void update(std::pair<size_t,size_t> pixel_pos);
+    void update(std::pair<size_t,size_t> pixel_pos, double yaw);
 
     double get_accel_pitch();
 

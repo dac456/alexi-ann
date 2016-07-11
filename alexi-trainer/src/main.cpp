@@ -80,21 +80,21 @@ int main(int argc, char* argv[])
         set_paths.push_back(fs::path(path));
     }
 
-    data_preprocessor preproc(set_paths);
-    preproc.run_processor(AVERAGE);
+    /*data_preprocessor preproc(set_paths);
+    //preproc.run_processor(AVERAGE);
     //preproc.run_processor(THRESHOLD);
 
-    training_set tset_dx(preproc.get_frames(), preproc.get_diff_images(), DX);
+    training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
     tset_dx.save_fann_data("./fann_ffn_dx.data");
 
-    training_set tset_dy(preproc.get_frames(), preproc.get_diff_images(), DY);
+    training_set tset_dy(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DY);
     tset_dy.save_fann_data("./fann_ffn_dy.data");
 
-    training_set tset_dtheta(preproc.get_frames(), preproc.get_diff_images(), DTHETA);
+    training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
     tset_dtheta.save_fann_data("./fann_ffn_dtheta.data");
 
-    training_set tset_terrain(preproc.get_frames(), preproc.get_diff_images(), TERRAIN);
-    tset_terrain.save_fann_data("./fann_ffn_terrain.data");
+    training_set tset_terrain(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), TERRAIN);
+    tset_terrain.save_fann_data("./fann_ffn_terrain.data");*/
 
     fann_ffn ffn_dx(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
     ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");
@@ -102,10 +102,10 @@ int main(int argc, char* argv[])
     fann_ffn ffn_dy(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
     ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net");
 
-    fann_ffn ffn_dtheta(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID);
+    fann_ffn ffn_dtheta(5, 1, vm["numhidden"].as<int>(), 4, FANN_SIGMOID);
     ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");
 
-    fann_ffn ffn_terrain(5, 256, 6, 64, FANN_SIGMOID);
+    fann_ffn ffn_terrain(262, 256, 8, 64, FANN_SIGMOID);
     ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");
 
     /*float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};

@@ -52,12 +52,18 @@ namespace po = boost::program_options;
     std::cout << _target_set.columns() << std::endl;
 }*/
 
-training_set::training_set(std::vector<frame_data> frames, std::vector<std::array<double,256>> diff_images, TRAINING_TYPE type)
+training_set::training_set(std::vector<frame_data> frames, std::vector<std::array<double,256>> images, std::vector<std::array<double,256>> diff_images, TRAINING_TYPE type)
     : _frames(frames)
+    , _images(images)
     , _diff_images(diff_images)
     , _type(type)
 {
-    _input_set.resize(5, frames.size());
+    if(type != TERRAIN){
+        _input_set.resize(5, frames.size());
+    }
+    else{
+        _input_set.resize(262, frames.size());
+    }
 
     switch(type){
         case DX:
@@ -98,7 +104,16 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     else{
         for(size_t i = 0; i < _diff_images.size(); i++){
             frame_data data = _frames[i];
-            column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.dx_last, data.dy_last);
+            //column(_input_set, i) = blaze::StaticVector<double, 261UL, blaze::columnVector>(data.left, data.right, data.pitch, data.dx_last, data.dy_last);
+            _input_set(0,i) = data.left;
+            _input_set(1,i) = data.right;
+            _input_set(2,i) = data.pitch;
+            _input_set(3,i) = data.dx_last;
+            _input_set(4,i) = data.dy_last;
+            _input_set(5,i) = data.theta;
+            for(int y = 6; y < 262; y++){
+                _input_set(y,i) = _images[i][y-5];
+            }
 
             switch(type){
                 case TERRAIN:
@@ -123,9 +138,14 @@ void training_set::save_fann_data(fs::path file){
         }
     }
     else{
-        fout << _input_set.columns() << " 5 256" << std::endl;
+        fout << _input_set.columns() << " 262 256" << std::endl;
         for(size_t i = 0; i < _input_set.columns(); i++){
-            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << " " << _input_set(4,i) << std::endl;
+            //fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << " " << _input_set(4,i) << std::endl;
+            for(size_t r = 0; r < _input_set.rows(); r++){
+                fout << _input_set(r,i) << " ";
+            }
+            fout << std::endl;
+
             for(size_t r = 0; r < _target_set.rows(); r++){
                 fout << _target_set(r,i) << " ";
             }

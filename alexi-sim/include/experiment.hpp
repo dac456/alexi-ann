@@ -22,6 +22,7 @@ private:
     terrain_ptr _terrain;
     platform_ptr _platform;
     fake_imu_ptr _imu;
+    float* _last_terrain_update;
 
     double _scale;
     double _particle_radius;
