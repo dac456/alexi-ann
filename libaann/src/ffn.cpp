@@ -192,7 +192,7 @@ bool ffn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 //for(size_t j = 0; j < e[L].columns(); j++){
                     //#pragma omp parallel for
                     for(size_t i=0; i<e[L].size(); i++){
-                        e[L][i] *= _output_activation_function_dx(e[L][i]);
+                        e[L][i] *= _output_activation_function_dx(z[L][i]);
                     }
                 //}
 

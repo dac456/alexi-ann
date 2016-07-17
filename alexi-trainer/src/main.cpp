@@ -1,5 +1,6 @@
 #include "ffn.hpp"
 #include "fann_ffn.hpp"
+#include "rnn.hpp"
 #include "data_preprocessor.hpp"
 #include "training_set.hpp"
 
@@ -80,6 +81,26 @@ int main(int argc, char* argv[])
         set_paths.push_back(fs::path(path));
     }
 
+    data_preprocessor preproc(set_paths);
+    training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
+
+    rnn test_rnn(3, 25, 1);
+    test_rnn.set_hidden_activation_function(sigmoid);
+    test_rnn.set_hidden_activation_function_dx(sigmoid_dx);
+    test_rnn.set_output_activation_function(linear);
+    test_rnn.set_output_activation_function_dx(linear_dx);
+
+    test_rnn.train(tset_dtheta.get_input_set(), tset_dtheta.get_target_set());
+
+    blaze::DynamicMatrix<double> testIn(3, 2);
+    testIn(0,0) = 2.09f;
+    testIn(1,0) = 2.09f;
+    testIn(2,0) = 0.001f;
+    testIn(0,1) = 2.09f;
+    testIn(1,1) = 2.09f;
+    testIn(2,1) = 0.002f;
+    std::cout << test_rnn.predict(testIn) << std::endl;
+
     /*data_preprocessor preproc(set_paths);
     //preproc.run_processor(AVERAGE);
     //preproc.run_processor(THRESHOLD);
@@ -94,7 +115,7 @@ int main(int argc, char* argv[])
     tset_dtheta.save_fann_data("./fann_ffn_dtheta.data");
 
     training_set tset_terrain(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), TERRAIN);
-    tset_terrain.save_fann_data("./fann_ffn_terrain.data");*/
+    tset_terrain.save_fann_data("./fann_ffn_terrain.data");
 
     fann_ffn ffn_dx(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
     ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");
@@ -106,7 +127,7 @@ int main(int argc, char* argv[])
     ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");
 
     fann_ffn ffn_terrain(262, 256, 8, 64, FANN_SIGMOID);
-    ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");
+    ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");*/
 
     /*float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};
     float* out = test_ffn.predict(test);

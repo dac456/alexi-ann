@@ -25,7 +25,7 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
         else{
 
         }
-
+#if 0
         std::vector<std::string> images;
         fs::path raygrid_path = set_path / "../raygrid/";
         if(fs::is_directory(raygrid_path)){
@@ -51,7 +51,7 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
 
             std::sort(diff_images.begin(), diff_images.end(), doj::alphanum_less<std::string>());
         }
-
+#endif
         //Process frames
         for(size_t i = 0; i < frames.size(); i++){
             std::cout << "Parsing frame " << frames[i] << "..." << std::endl;
@@ -109,7 +109,7 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
             }
         }
         #endif
-
+#if 0
         //Diff images
         std::array<double,256> zero;
         zero.fill(0.0);
@@ -166,6 +166,7 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
         for(size_t i = 1; i < _diff_images.size(); i++){
             _images.push_back(_diff_images[i-1]);
         }
+#endif
     }
 }
 
