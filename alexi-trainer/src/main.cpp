@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     data_preprocessor preproc(set_paths);
     training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
 
-    rnn test_rnn(3, 25, 1);
+    rnn test_rnn(3, 10, 1);
     test_rnn.set_hidden_activation_function(sigmoid);
     test_rnn.set_hidden_activation_function_dx(sigmoid_dx);
     test_rnn.set_output_activation_function(linear);
