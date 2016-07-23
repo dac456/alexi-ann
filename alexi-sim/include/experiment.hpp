@@ -11,13 +11,14 @@ namespace fs = boost::filesystem;
 #include "platform.hpp"
 #include "fake_imu.hpp"
 
+#include "rnn.hpp"
 #include "fann_ffn.hpp"
 
 class experiment{
 private:
     SDL_Surface* _display;
 
-    std::map<std::string, std::shared_ptr<fann_ffn>> _ann;
+    std::map<std::string, std::shared_ptr<rnn>> _ann;
 
     terrain_ptr _terrain;
     platform_ptr _platform;

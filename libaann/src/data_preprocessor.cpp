@@ -59,10 +59,12 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
             if(i == 0){
                 data.dx_last = 0.0;
                 data.dy_last = 0.0;
+                data.dtheta_last = 0.0;
             }
             else{
                 data.dx_last = _frames[i-1].dx;
                 data.dy_last = _frames[i-1].dy;
+                data.dtheta_last = _frames[i-1].dtheta;
             }
             if(!data.warped){
                 _frames.push_back(data);
@@ -173,7 +175,7 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
 void data_preprocessor::run_processor(PREPROCESSOR proc_type){
     switch(proc_type){
         case AVERAGE:
-        _average_frames(10);
+        _average_frames(40);
         break;
 
         case THRESHOLD:

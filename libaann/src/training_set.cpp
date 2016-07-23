@@ -4,6 +4,8 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
+#include <blaze/util/serialization/Archive.h>
+
 /*training_set::training_set(fs::path path, TRAINING_TYPE type)
     : _set_path(path)
 {
@@ -59,7 +61,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     , _type(type)
 {
     if(type != TERRAIN){
-        _input_set.resize(3, frames.size());
+        _input_set.resize(6, frames.size());
     }
     else{
         _input_set.resize(262, frames.size());
@@ -84,7 +86,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     if(_type != TERRAIN){
         for(size_t i = 0; i < _frames.size(); i++){
             frame_data data = _frames[i];
-            column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch/*, data.dx_last, data.dy_last*/);
+            column(_input_set, i) = blaze::StaticVector<double, 6UL, blaze::columnVector>(data.left, data.right, data.pitch, data.dx_last, data.dy_last, data.dtheta_last);
 
             switch(type){
                 case DX:
@@ -154,6 +156,13 @@ void training_set::save_fann_data(fs::path file){
     }
 
     fout.close();
+}
+
+void training_set::save_blaze_data(fs::path file){
+    std::string output = file.string() + ".blaze.data";
+
+    blaze::Archive<std::ofstream> archive(output);
+    archive << _input_set << _target_set;
 }
 
 std::vector<frame_data> training_set::get_frames(){

@@ -4,6 +4,7 @@
 #include <memory>
 #include <SDL/SDL.h>
 
+#include "rnn.hpp"
 #include "fann_ffn.hpp"
 #include "fake_imu.hpp"
 
@@ -12,7 +13,7 @@
 class platform{
 private:
     SDL_Surface* _display;
-    std::map<std::string, std::shared_ptr<fann_ffn>> _ann;
+    std::map<std::string, std::shared_ptr<rnn>> _ann;
 
     fake_imu_ptr _imu;
 
@@ -28,10 +29,13 @@ private:
     double _right;
     double _last_dx;
     double _last_dy;
+    double _last_dtheta;
     float* _last_input;
+    blaze::DynamicMatrix<double> _inputs;
+    size_t _num_inputs;
 
 public:
-    platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<fann_ffn>> ann, fake_imu_ptr imu, double init_x, double init_y);
+    platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>> ann, fake_imu_ptr imu, double init_x, double init_y);
 
     void step(double width, double height); //OK to pass this info here?
 

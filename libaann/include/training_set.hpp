@@ -15,6 +15,7 @@ struct frame_data{
     double dx_last, dy_last;
     double theta;
     double dtheta;
+    double dtheta_last;
     double pitch;
 
     double v;
@@ -53,6 +54,7 @@ public:
     training_set(std::vector<frame_data> frames, std::vector<std::array<double,256>> images, std::vector<std::array<double,256>> diff_images, TRAINING_TYPE type);
 
     void save_fann_data(fs::path file);
+    void save_blaze_data(fs::path file);
 
     std::vector<frame_data> get_frames();
     blaze::DynamicMatrix<double> get_input_set();

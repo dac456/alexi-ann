@@ -2,6 +2,7 @@
 #define __FAKE_IMU_HPP
 
 #include <memory>
+#include <queue>
 #include "terrain.hpp"
 
 class fake_imu{
@@ -11,6 +12,8 @@ private:
     size_t _pixel_pos_x;
     size_t _pixel_pos_y;
     double _yaw;
+
+    std::vector<double> _pitch_samples;
 
 public:
     fake_imu(terrain_ptr terrain);

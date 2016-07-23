@@ -36,6 +36,32 @@ double tanh_dx(double value){
     return 1.0 - pow(tanh(value), 2.0);
 }
 
+double softsign(double value){
+    return value / (fabs(value) + 1.0);
+}
+
+double softsign_dx(double value){
+    return 1.0 / pow(fabs(value) + 1, 2.0);
+}
+
+double log_semisig(double value){
+    if(value > 0){
+        return log(value + 1.0);
+    }
+    else{
+        return -log(fabs(value) + 1.0);
+    }
+}
+
+double log_semisig_dx(double value){
+    if(value > 0){
+        return 1.0 / (value + 1.0);
+    }
+    else{
+        return -1.0 / (fabs(value) + 1.0);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     //Get options
@@ -81,25 +107,38 @@ int main(int argc, char* argv[])
         set_paths.push_back(fs::path(path));
     }
 
-    data_preprocessor preproc(set_paths);
+    /*data_preprocessor preproc(set_paths);
+    preproc.run_processor(AVERAGE);
+
+    training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
+    tset_dx.save_blaze_data("./rnn_dx");
+
+    training_set tset_dy(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DY);
+    tset_dy.save_blaze_data("./rnn_dy");
+
     training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
+    tset_dtheta.save_blaze_data("./rnn_dtheta");*/
 
-    rnn test_rnn(3, 10, 1);
-    test_rnn.set_hidden_activation_function(sigmoid);
-    test_rnn.set_hidden_activation_function_dx(sigmoid_dx);
-    test_rnn.set_output_activation_function(linear);
-    test_rnn.set_output_activation_function_dx(linear_dx);
+    rnn rnn_dx(6, 5, 1);
+    rnn_dx.set_hidden_activation_function(log_semisig);
+    rnn_dx.set_hidden_activation_function_dx(log_semisig_dx);
+    rnn_dx.set_output_activation_function(linear);
+    rnn_dx.set_output_activation_function_dx(linear_dx);
+    rnn_dx.train("./rnn_dx", "./rnn_dx");
 
-    test_rnn.train(tset_dtheta.get_input_set(), tset_dtheta.get_target_set());
+    rnn rnn_dy(6, 5, 1);
+    rnn_dy.set_hidden_activation_function(log_semisig);
+    rnn_dy.set_hidden_activation_function_dx(log_semisig_dx);
+    rnn_dy.set_output_activation_function(linear);
+    rnn_dy.set_output_activation_function_dx(linear_dx);
+    rnn_dy.train("./rnn_dy", "./rnn_dy");
 
-    blaze::DynamicMatrix<double> testIn(3, 2);
-    testIn(0,0) = 2.09f;
-    testIn(1,0) = 2.09f;
-    testIn(2,0) = 0.001f;
-    testIn(0,1) = 2.09f;
-    testIn(1,1) = 2.09f;
-    testIn(2,1) = 0.002f;
-    std::cout << test_rnn.predict(testIn) << std::endl;
+    /*rnn rnn_dtheta(6, 35, 1);
+    rnn_dtheta.set_hidden_activation_function(linear);
+    rnn_dtheta.set_hidden_activation_function_dx(linear_dx);
+    rnn_dtheta.set_output_activation_function(linear);
+    rnn_dtheta.set_output_activation_function_dx(linear_dx);
+    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta");*/
 
     /*data_preprocessor preproc(set_paths);
     //preproc.run_processor(AVERAGE);

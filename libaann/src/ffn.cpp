@@ -1,6 +1,7 @@
 #include "ffn.hpp"
 
 #include <blaze/util/Random.h>
+#include <blaze/util/serialization/Archive.h>
 
 ffn::ffn(size_t input_size, size_t output_size, size_t num_hidden_layers, size_t hidden_layer_dim, size_t batch_size)
      : _input_size(input_size)

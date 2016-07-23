@@ -6,6 +6,56 @@ namespace po = boost::program_options;
 
 #include <SDL/SDL_gfxPrimitives.h>
 
+double sigmoid(double value){
+    return 1.0 / (1.0 + exp(-value));
+}
+
+double sigmoid_dx(double value){
+    return sigmoid(value) * (1.0 - sigmoid(value));
+}
+
+double linear(double value){
+    return value;
+}
+
+double linear_dx(double value){
+    return 1.0;
+}
+
+double sigmoid_tanh(double value){
+    return tanh(value);
+}
+
+double tanh_dx(double value){
+    return 1.0 - pow(tanh(value), 2.0);
+}
+
+double softsign(double value){
+    return value / (fabs(value) + 1.0);
+}
+
+double softsign_dx(double value){
+    return 1.0 / pow(fabs(value) + 1, 2.0);
+}
+
+double log_semisig(double value){
+    if(value > 0){
+        return log(value + 1.0);
+    }
+    else{
+        return -log(fabs(value) + 1.0);
+    }
+}
+
+double log_semisig_dx(double value){
+    if(value > 0){
+        return 1.0 / (value + 1.0);
+    }
+    else{
+        return -1.0 / (fabs(value) + 1.0);
+    }
+}
+
 experiment::experiment(SDL_Surface* disp, fs::path cfg)
     : _display(disp)
     , _last_terrain_update(nullptr)
@@ -53,10 +103,25 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         _terrain = std::make_shared<terrain>(_display, map_file, _scale);
 
         //std::pair<size_t,size_t> vehicle_position = _real_pos_to_pixel_pos(std::make_pair(opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>()));
-        _ann["dx"] = std::make_shared<fann_ffn>("fann_dx.net");
-        _ann["dy"] = std::make_shared<fann_ffn>("fann_dy.net");
-        _ann["dtheta"] = std::make_shared<fann_ffn>("fann_dtheta.net");
-        _ann["terrain"] = std::make_shared<fann_ffn>("fann_terrain.net");
+        _ann["dx"] = std::make_shared<rnn>("rnn_dx");
+        _ann["dx"]->set_hidden_activation_function(log_semisig);
+        _ann["dx"]->set_hidden_activation_function_dx(log_semisig_dx);
+        _ann["dx"]->set_output_activation_function(linear);
+        _ann["dx"]->set_output_activation_function_dx(linear_dx);
+
+        _ann["dy"] = std::make_shared<rnn>("rnn_dy");
+        _ann["dy"]->set_hidden_activation_function(log_semisig);
+        _ann["dy"]->set_hidden_activation_function_dx(log_semisig_dx);
+        _ann["dy"]->set_output_activation_function(linear);
+        _ann["dy"]->set_output_activation_function_dx(linear_dx);
+
+        _ann["dtheta"] = std::make_shared<rnn>("rnn_dtheta");
+        _ann["dtheta"]->set_hidden_activation_function(linear);
+        _ann["dtheta"]->set_hidden_activation_function_dx(linear_dx);
+        _ann["dtheta"]->set_output_activation_function(linear);
+        _ann["dtheta"]->set_output_activation_function_dx(linear_dx);
+
+        //_ann["terrain"] = std::make_shared<fann_ffn>("fann_terrain.net");
         _imu = std::make_shared<fake_imu>(_terrain);
         _platform = std::make_shared<platform>(_display, _ann, _imu, opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>());
     }
@@ -75,11 +140,11 @@ void experiment::step(){
     std::pair<size_t,size_t> plot_pos = _real_pos_to_pixel_pos(real_pos);
 
     if(_terrain){
-        float* in = _platform->get_last_input();
+        /*float* in = _platform->get_last_input();
         if(in){
             float inTerrain[262];
             for(size_t i = 0; i < 6; i++) inTerrain[i] = in[i];
-            
+
             if(_last_terrain_update == nullptr){
                 for(size_t i = 6; i < 262; i++) inTerrain[i] = 0.0f;
             }
@@ -121,7 +186,7 @@ void experiment::step(){
 
                 size_t idx = 0;
                 for(size_t i = 0; i < 16; i++){
-                    int y = (start_y + i) /*% _terrain->get_display_height()*/;
+                    int y = (start_y + i);
                     if(y < 0){
                         y = _terrain->get_display_height() + y;
                     }
@@ -129,7 +194,7 @@ void experiment::step(){
                         y = y - _terrain->get_display_height();
                     }
                     for(size_t j = 0; j < 16; j++){
-                        int x = (start_x + j) /*% _terrain->get_display_width()*/;
+                        int x = (start_x + j);
                         if(x < 0){
                             x = _terrain->get_display_width() + x;
                         }
@@ -141,7 +206,7 @@ void experiment::step(){
                     }
                 }
             }
-        }
+        }*/
         _terrain->update();
     }
 

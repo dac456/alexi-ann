@@ -1,6 +1,7 @@
 #include "rnn.hpp"
 
 #include <blaze/util/Random.h>
+#include <blaze/util/serialization/Archive.h>
 
 inline int32_t t_idx(size_t L, int32_t t){
     if(t == -1){
@@ -30,6 +31,20 @@ rnn::rnn(size_t input_dim, size_t hidden_layer_dim, size_t output_dim)
     _squared_error = 0.0;
 }
 
+rnn::rnn(fs::path base_name){
+    std::string input_path = base_name.string() + ".blaze.net";
+
+    blaze::DynamicMatrix<double> input_matrix, output_matrix;
+    blaze::Archive<std::ifstream> archive(input_path);
+    archive >> _input_weights;
+    archive >> _hidden_weights;
+    archive >> _output_weights;
+
+    _input_dim = _input_weights.columns();
+    _hidden_layer_dim = _hidden_weights.columns();
+    _output_dim = _output_weights.rows();
+}
+
 rnn::~rnn(){
 
 }
@@ -50,17 +65,17 @@ void rnn::set_output_activation_function_dx(std::function<double(double)> fn){
     _output_activation_function_dx = fn;
 }
 
-bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output){
-    const size_t L = 10;
+bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output, fs::path output_base_name){
+    const size_t L = 5;
 
-    for(size_t epoch = 0; epoch < 200; epoch++){
+    for(size_t epoch = 0; epoch < 100; epoch++){
         std::cout << "Starting epoch " << epoch << "..." << std::endl;
 
         for(size_t series = 0; series < floor(input.columns() / L); series++){
             blaze::DynamicMatrix<double> X(input.rows(), L);
             blaze::DynamicMatrix<double> Y(output.rows(), L);
 
-            for(size_t i = 0; i < 10; i++){
+            for(size_t i = 0; i < L; i++){
                 column(X, i) = column(input, (series*L) + i);
                 column(Y, i) = column(output, (series*L) + i);
             }
@@ -121,7 +136,7 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     e[i] *= _hidden_activation_function_dx(z(i, t));
                 }
 
-                for(int32_t tau = t + 1; tau >= std::max(0, t-5); --tau){
+                for(int32_t tau = t + 1; tau >= std::max(0, t-75); --tau){
                     hidden_weights_delta += e * trans(column(s, t_idx(L,tau-1)));
                     input_weights_delta += e * trans(column(input, tau));
 
@@ -133,13 +148,32 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 }
             }
 
-            _input_weights -= 0.001 * input_weights_delta;
-            _hidden_weights -= 0.001 * hidden_weights_delta;
-            _output_weights -= 0.001 * output_weights_delta;
+            _input_weights -= 0.005 * input_weights_delta;
+            _hidden_weights -= 0.005 * hidden_weights_delta;
+            _output_weights -= 0.005 * output_weights_delta;
         }
 
         std::cout << "Error: " << _squared_error << std::endl;
+        if(_squared_error[0] <= 0.00000000002){
+            break;
+        }
     }
+
+    std::string output_file_str = output_base_name.string() + ".blaze.net";
+
+    blaze::Archive<std::ofstream> archive(output_file_str);
+    archive << _input_weights << _hidden_weights << _output_weights;
+}
+
+bool rnn::train(fs::path input_base_name, fs::path output_base_name){
+    std::string input_path = input_base_name.string() + ".blaze.data";
+
+    blaze::DynamicMatrix<double> input_matrix, output_matrix;
+    blaze::Archive<std::ifstream> archive(input_path);
+    archive >> input_matrix;
+    archive >> output_matrix;
+
+    train(input_matrix, output_matrix, output_base_name);
 }
 
 blaze::DynamicVector<double, blaze::columnVector> rnn::predict(blaze::DynamicMatrix<double> input){
@@ -170,6 +204,14 @@ blaze::DynamicVector<double, blaze::columnVector> rnn::predict(blaze::DynamicMat
     }
 
     //TODO: test different methods of combining output
-    std::cout << output << std::endl;
-    return column(output, 0);
+    blaze::DynamicVector<double, blaze::columnVector> avg(output.rows());
+    avg = 0.0;
+
+    for(int32_t t = 0; t < L; t++){
+        for(int32_t i = 0; i < avg.size(); i++){
+            avg[i] += output(i,t);
+        }
+    }
+    avg /= L;
+    return avg;
 }
