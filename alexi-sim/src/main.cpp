@@ -47,10 +47,10 @@ int main(int argc, char* argv[]){
                 }
             }
 
-            //if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_time) >= std::chrono::milliseconds(33)){
+            if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_time) >= std::chrono::milliseconds(1)){
                 expr.step();
                 last_time = std::chrono::steady_clock::now();
-            //}
+            }
         }
 
     }

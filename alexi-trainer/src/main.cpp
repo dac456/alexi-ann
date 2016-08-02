@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
     }
 
     /*data_preprocessor preproc(set_paths);
-    preproc.run_processor(AVERAGE);
+    //preproc.run_processor(AVERAGE);
 
     training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
     tset_dx.save_blaze_data("./rnn_dx");
@@ -119,26 +119,32 @@ int main(int argc, char* argv[])
     training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
     tset_dtheta.save_blaze_data("./rnn_dtheta");*/
 
-    rnn rnn_dx(6, 5, 1);
-    rnn_dx.set_hidden_activation_function(log_semisig);
-    rnn_dx.set_hidden_activation_function_dx(log_semisig_dx);
+    /*rnn rnn_dx(3, 35, 1);
+    rnn_dx.set_hidden_activation_function(sigmoid_tanh);
+    rnn_dx.set_hidden_activation_function_dx(tanh_dx);
     rnn_dx.set_output_activation_function(linear);
     rnn_dx.set_output_activation_function_dx(linear_dx);
-    rnn_dx.train("./rnn_dx", "./rnn_dx");
+    rnn_dx.train("./rnn_dx", "./rnn_dx", 100);
 
-    rnn rnn_dy(6, 5, 1);
-    rnn_dy.set_hidden_activation_function(log_semisig);
-    rnn_dy.set_hidden_activation_function_dx(log_semisig_dx);
+    rnn rnn_dy(3, 35, 1);
+    rnn_dy.set_hidden_activation_function(sigmoid_tanh);
+    rnn_dy.set_hidden_activation_function_dx(tanh_dx);
     rnn_dy.set_output_activation_function(linear);
     rnn_dy.set_output_activation_function_dx(linear_dx);
-    rnn_dy.train("./rnn_dy", "./rnn_dy");
+    rnn_dy.train("./rnn_dy", "./rnn_dy", 100);
 
-    /*rnn rnn_dtheta(6, 35, 1);
+    rnn rnn_dtheta(3, 5, 1);
     rnn_dtheta.set_hidden_activation_function(linear);
     rnn_dtheta.set_hidden_activation_function_dx(linear_dx);
     rnn_dtheta.set_output_activation_function(linear);
     rnn_dtheta.set_output_activation_function_dx(linear_dx);
-    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta");*/
+    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta", 100);*/
+    rnn rnn_dtheta(3, 35, 1);
+    rnn_dtheta.set_hidden_activation_function(sigmoid);
+    rnn_dtheta.set_hidden_activation_function_dx(sigmoid_dx);
+    rnn_dtheta.set_output_activation_function(linear);
+    rnn_dtheta.set_output_activation_function_dx(linear_dx);
+    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta", 100);
 
     /*data_preprocessor preproc(set_paths);
     //preproc.run_processor(AVERAGE);

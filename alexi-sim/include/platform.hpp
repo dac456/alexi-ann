@@ -31,7 +31,9 @@ private:
     double _last_dy;
     double _last_dtheta;
     float* _last_input;
-    blaze::DynamicMatrix<double> _inputs;
+    blaze::DynamicMatrix<double> _input_dx;
+    blaze::DynamicMatrix<double> _input_dy;
+    blaze::DynamicMatrix<double> _input_dtheta;
     size_t _num_inputs;
 
 public:

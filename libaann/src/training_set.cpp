@@ -61,7 +61,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     , _type(type)
 {
     if(type != TERRAIN){
-        _input_set.resize(6, frames.size());
+        _input_set.resize(3, frames.size());
     }
     else{
         _input_set.resize(262, frames.size());
@@ -86,7 +86,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     if(_type != TERRAIN){
         for(size_t i = 0; i < _frames.size(); i++){
             frame_data data = _frames[i];
-            column(_input_set, i) = blaze::StaticVector<double, 6UL, blaze::columnVector>(data.left, data.right, data.pitch, data.dx_last, data.dy_last, data.dtheta_last);
+            column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch);
 
             switch(type){
                 case DX:

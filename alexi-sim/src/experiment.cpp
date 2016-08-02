@@ -104,20 +104,20 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
 
         //std::pair<size_t,size_t> vehicle_position = _real_pos_to_pixel_pos(std::make_pair(opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>()));
         _ann["dx"] = std::make_shared<rnn>("rnn_dx");
-        _ann["dx"]->set_hidden_activation_function(log_semisig);
-        _ann["dx"]->set_hidden_activation_function_dx(log_semisig_dx);
+        _ann["dx"]->set_hidden_activation_function(sigmoid_tanh);
+        _ann["dx"]->set_hidden_activation_function_dx(tanh_dx);
         _ann["dx"]->set_output_activation_function(linear);
         _ann["dx"]->set_output_activation_function_dx(linear_dx);
 
         _ann["dy"] = std::make_shared<rnn>("rnn_dy");
-        _ann["dy"]->set_hidden_activation_function(log_semisig);
-        _ann["dy"]->set_hidden_activation_function_dx(log_semisig_dx);
+        _ann["dy"]->set_hidden_activation_function(sigmoid_tanh);
+        _ann["dy"]->set_hidden_activation_function_dx(tanh_dx);
         _ann["dy"]->set_output_activation_function(linear);
         _ann["dy"]->set_output_activation_function_dx(linear_dx);
 
         _ann["dtheta"] = std::make_shared<rnn>("rnn_dtheta");
-        _ann["dtheta"]->set_hidden_activation_function(linear);
-        _ann["dtheta"]->set_hidden_activation_function_dx(linear_dx);
+        _ann["dtheta"]->set_hidden_activation_function(sigmoid);
+        _ann["dtheta"]->set_hidden_activation_function_dx(sigmoid_dx);
         _ann["dtheta"]->set_output_activation_function(linear);
         _ann["dtheta"]->set_output_activation_function_dx(linear_dx);
 

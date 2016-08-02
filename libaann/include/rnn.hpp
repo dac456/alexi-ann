@@ -36,8 +36,8 @@ public:
     void set_output_activation_function(std::function<double(double)> fn);
     void set_output_activation_function_dx(std::function<double(double)> fn);
 
-    bool train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output, fs::path output_base_name);
-    bool train(fs::path input_base_name, fs::path output_base_name);
+    bool train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output, fs::path output_base_name, size_t series_length = 100);
+    bool train(fs::path input_base_name, fs::path output_base_name, size_t series_length = 100);
     blaze::DynamicVector<double, blaze::columnVector> predict(blaze::DynamicMatrix<double> input);
 };
 

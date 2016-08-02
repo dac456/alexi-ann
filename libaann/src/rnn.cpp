@@ -18,14 +18,14 @@ rnn::rnn(size_t input_dim, size_t hidden_layer_dim, size_t output_dim)
     , _hidden_layer_dim(hidden_layer_dim)
     , _output_dim(output_dim)
 {
-    _input_weights.resize(hidden_layer_dim, input_dim);
+    _input_weights.resize(hidden_layer_dim, input_dim + output_dim);
     _hidden_weights.resize(hidden_layer_dim, hidden_layer_dim);
     _output_weights.resize(output_dim, hidden_layer_dim);
 
     blaze::Rand< blaze::DynamicMatrix<double> > rndMat;
-    rndMat.randomize(_input_weights, 0.0, 0.01);
-    rndMat.randomize(_hidden_weights, 0.0, 0.01);
-    rndMat.randomize(_output_weights, 0.0, 0.01);
+    rndMat.randomize(_input_weights, 0.0, 0.05);
+    rndMat.randomize(_hidden_weights, 0.0, 0.05);
+    rndMat.randomize(_output_weights, 0.0, 0.05);
 
     _squared_error.resize(output_dim);
     _squared_error = 0.0;
@@ -65,25 +65,30 @@ void rnn::set_output_activation_function_dx(std::function<double(double)> fn){
     _output_activation_function_dx = fn;
 }
 
-bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output, fs::path output_base_name){
-    const size_t L = 5;
+bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output, fs::path output_base_name, size_t series_length){
+    const size_t L = series_length;
 
-    for(size_t epoch = 0; epoch < 100; epoch++){
+    for(size_t epoch = 0; epoch < 10; epoch++){
         std::cout << "Starting epoch " << epoch << "..." << std::endl;
 
         for(size_t series = 0; series < floor(input.columns() / L); series++){
-            blaze::DynamicMatrix<double> X(input.rows(), L);
-            blaze::DynamicMatrix<double> Y(output.rows(), L);
+            blaze::DynamicMatrix<double> X(_input_dim + _output_dim, L);
+            blaze::DynamicMatrix<double> Y(_output_dim, L);
 
             for(size_t i = 0; i < L; i++){
-                column(X, i) = column(input, (series*L) + i);
+                for(size_t j = 0; j < _input_dim; j++){
+                    X(j,i) = input(j,i);
+                }
+                for(size_t j = _input_dim; j < (_input_dim + _output_dim); j++){
+                    X(j,i) = 0.0;
+                }
+            }
+            for(size_t i = 0; i < L; i++){
+                //column(X, i) = column(input, (series*L) + i);
                 column(Y, i) = column(output, (series*L) + i);
             }
 
-            //blaze::DynamicMatrix<double> activations(_hidden_layer_dim, L+1);
-
-
-            blaze::DynamicMatrix<double> output(_output_dim, L);
+            blaze::DynamicMatrix<double> o(_output_dim, L);
 
             //Forward pass
             blaze::DynamicMatrix<double> z(_hidden_layer_dim, L+1);
@@ -99,10 +104,14 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 }
                 //column(activations, t) = column(s, t);
 
-                column(output, t) = _output_weights*column(s, t);
+                column(o, t) = _output_weights*column(s, t);
                 #pragma omp parallel for
                 for(size_t i = 0; i < _output_dim; i++){
-                    output(i,t) = _output_activation_function(output(i,t));
+                    o(i,t) = _output_activation_function(o(i,t));
+                }
+
+                for(size_t i = _input_dim; i < (_input_dim + _output_dim); i++){
+                    X(i,t+1) = output(i-_input_dim,t);
                 }
             }
 
@@ -115,7 +124,7 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
             input_weights_delta = 0.0;
 
             for(int32_t t = L-1; t >= 0; --t){
-                blaze::DynamicVector<double, blaze::columnVector> dy = column(output, t) - column(Y, t);
+                blaze::DynamicVector<double, blaze::columnVector> dy = column(o, t) - column(Y, t);
                 #pragma omp parallel for
                 for(size_t i = 0; i < dy.size(); i++){
                     _squared_error[i] += pow(dy[i], 2.0);
@@ -136,9 +145,9 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     e[i] *= _hidden_activation_function_dx(z(i, t));
                 }
 
-                for(int32_t tau = t + 1; tau >= std::max(0, t-75); --tau){
+                for(int32_t tau = t /*+ 1*/; tau >= std::max(0, t-75); --tau){
                     hidden_weights_delta += e * trans(column(s, t_idx(L,tau-1)));
-                    input_weights_delta += e * trans(column(input, tau));
+                    input_weights_delta += e * trans(column(X, tau));
 
                     e = trans(_hidden_weights)*e;
                     #pragma omp parallel for
@@ -154,9 +163,9 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
         }
 
         std::cout << "Error: " << _squared_error << std::endl;
-        if(_squared_error[0] <= 0.00000000002){
-            break;
-        }
+        //if(_squared_error[0] <= 0.00000000002){
+        //    break;
+        //}
     }
 
     std::string output_file_str = output_base_name.string() + ".blaze.net";
@@ -165,7 +174,7 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
     archive << _input_weights << _hidden_weights << _output_weights;
 }
 
-bool rnn::train(fs::path input_base_name, fs::path output_base_name){
+bool rnn::train(fs::path input_base_name, fs::path output_base_name, size_t series_length){
     std::string input_path = input_base_name.string() + ".blaze.data";
 
     blaze::DynamicMatrix<double> input_matrix, output_matrix;
@@ -173,7 +182,7 @@ bool rnn::train(fs::path input_base_name, fs::path output_base_name){
     archive >> input_matrix;
     archive >> output_matrix;
 
-    train(input_matrix, output_matrix, output_base_name);
+    train(input_matrix, output_matrix, output_base_name, series_length);
 }
 
 blaze::DynamicVector<double, blaze::columnVector> rnn::predict(blaze::DynamicMatrix<double> input){
@@ -204,7 +213,7 @@ blaze::DynamicVector<double, blaze::columnVector> rnn::predict(blaze::DynamicMat
     }
 
     //TODO: test different methods of combining output
-    blaze::DynamicVector<double, blaze::columnVector> avg(output.rows());
+    /*blaze::DynamicVector<double, blaze::columnVector> avg(output.rows());
     avg = 0.0;
 
     for(int32_t t = 0; t < L; t++){
@@ -213,5 +222,6 @@ blaze::DynamicVector<double, blaze::columnVector> rnn::predict(blaze::DynamicMat
         }
     }
     avg /= L;
-    return avg;
+    return avg;*/
+    return column(output, 0);
 }
