@@ -145,7 +145,7 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     e[i] *= _hidden_activation_function_dx(z(i, t));
                 }
 
-                for(int32_t tau = t /*+ 1*/; tau >= std::max(0, t-75); --tau){
+                for(int32_t tau = t /*+ 1*/; tau >= std::max(0, t-5); --tau){
                     hidden_weights_delta += e * trans(column(s, t_idx(L,tau-1)));
                     input_weights_delta += e * trans(column(X, tau));
 
@@ -157,9 +157,9 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 }
             }
 
-            _input_weights -= 0.005 * input_weights_delta;
-            _hidden_weights -= 0.005 * hidden_weights_delta;
-            _output_weights -= 0.005 * output_weights_delta;
+            _input_weights -= 0.00001 * input_weights_delta;
+            _hidden_weights -= 0.00001 * hidden_weights_delta;
+            _output_weights -= 0.00001 * output_weights_delta;
         }
 
         std::cout << "Error: " << _squared_error << std::endl;

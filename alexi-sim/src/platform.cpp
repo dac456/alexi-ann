@@ -6,10 +6,12 @@
 #endif
 
 std::default_random_engine generator;
-std::uniform_real_distribution<double> distribution(0, 1);
+std::uniform_real_distribution<double> distribution(0.25, 1.0);
 
 platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>> ann, fake_imu_ptr imu, double init_x, double init_y)
-    : _display(disp)
+    : _ticks(0)
+    , _rand(0.0)
+    , _display(disp)
     , _ann(ann)
     , _imu(imu)
     , _pos_x(init_x)
@@ -20,7 +22,7 @@ platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>
     , _last_dy(0.0)
     , _last_dtheta(0.0)
     , _right(0.0)
-    , _num_inputs(100)
+    , _num_inputs(50)
 {
     _input_dx.resize(4, _num_inputs);
     _input_dx = 0.0;
@@ -31,27 +33,52 @@ platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>
 }
 
 void platform::step(double width, double height){
-    /*if(is_inclined()){
-        _desired_linear_velocity = (3.0f);
-        _desired_angular_velocity = (0.0f);
+    const size_t interval = 4000;
+
+    if(_ticks < interval){
+        _desired_linear_velocity = _rand * 3.0f;
+        _desired_angular_velocity = 0.0f;
     }
-    else{
-        _desired_linear_velocity = (2.0f);
+    else if(_ticks >= interval && _ticks < interval*2){
+        _desired_linear_velocity = -_rand * 3.0f;
+        _desired_angular_velocity = 0.0f;
+    }
+    else if(_ticks >= interval*2 && _ticks < interval*3){
+        _desired_linear_velocity = 0.0f;
+        _desired_angular_velocity = _rand * 1.57f;
+    }
+    else if(_ticks >= interval*3 && _ticks < interval*4){
+        _desired_linear_velocity = 0.0f;
+        _desired_angular_velocity = -_rand * 1.57f;
+    }
+    else if(_ticks >= interval*4 && _ticks < interval*5){
+        _desired_linear_velocity = _rand * 3.0f;
+        _desired_angular_velocity = _rand * 1.57f;
+    }
+    else if(_ticks >= interval*5 && _ticks < interval*6){
+        _desired_linear_velocity = -_rand * 3.0f;
+        _desired_angular_velocity = -_rand * 1.57f;
+    }
+    else if(_ticks >= interval*6 && _ticks < interval*7){
+        _desired_linear_velocity = -_rand * 3.0f;
+        _desired_angular_velocity = _rand * 1.57f;
+    }
+    else if(_ticks >= interval*7 && _ticks < interval*8){
+        _desired_linear_velocity = _rand * 3.0f;
+        _desired_angular_velocity = -_rand * 1.57f;
+    }
 
+    if(_ticks % 250 == 0){
+        _rand = distribution(generator);
+    }
 
-        double r = distribution(generator);
-
-        if(r < 0.25) _desired_angular_velocity = (1.57);
-        else if(r >= 0.25 && r < 0.5) _desired_angular_velocity = (-1.57);
-        else if(r > 0.75) _desired_angular_velocity = (0.0f);
-    }*/
-    _desired_linear_velocity = 0.7f;
-    _desired_angular_velocity = 0.3f;
+    _ticks++;
+    _move();
 
     std::cout << "pitch: " << _imu->get_accel_pitch() << std::endl;
     std::cout << _left << " " << _right << std::endl;
     //float in[3] = {_left, _right, _imu->get_accel_pitch()};
-    /*if(_num_inputs < 30){
+    /*if(_num_inputs < 50){
         _num_inputs++;
         _input_dx.resize(4, _num_inputs);
         _input_dy.resize(4, _num_inputs);
@@ -72,9 +99,9 @@ void platform::step(double width, double height){
         column(_input_dy, i) = column(_input_dy, i+1);
         column(_input_dtheta, i) = column(_input_dtheta, i+1);
     }
-    column(_input_dx, 0) = in_dx_current;
-    column(_input_dy, 0) = in_dy_current;
-    column(_input_dtheta, 0) = in_dtheta_current;
+    column(_input_dx, _num_inputs-1) = in_dx_current;
+    column(_input_dy, _num_inputs-1) = in_dy_current;
+    column(_input_dtheta, _num_inputs-1) = in_dtheta_current;
 
     blaze::DynamicVector<double, blaze::columnVector> out_dx = _ann["dx"]->predict(_input_dx);
     blaze::DynamicVector<double, blaze::columnVector> out_dy = _ann["dy"]->predict(_input_dy);
@@ -94,10 +121,10 @@ void platform::step(double width, double height){
     }
 
     if(_desired_angular_velocity > 0){
-        _yaw += out_dtheta[0];
+        _yaw -= out_dtheta[0];
     }
     else{
-        _yaw -= out_dtheta[0];
+        _yaw += out_dtheta[0];
     }
     _pos_x += speed*cos(_yaw);
     _pos_y += speed*sin(_yaw);
@@ -117,7 +144,7 @@ void platform::step(double width, double height){
         _pos_y += height;
     }
 
-    _move();
+    //_move();
     //_last_input = in;
 }
 

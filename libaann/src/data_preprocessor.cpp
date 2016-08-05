@@ -1,7 +1,7 @@
 #include "data_preprocessor.hpp"
 #include "../../contrib/alphanum.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #include "../../contrib/stb/stb_image.h"
 
 #include <boost/program_options.hpp>

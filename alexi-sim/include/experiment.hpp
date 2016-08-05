@@ -17,6 +17,8 @@ namespace fs = boost::filesystem;
 class experiment{
 private:
     SDL_Surface* _display;
+    std::vector<std::pair<int,int>> _ref_path;
+    std::vector<std::pair<int,int>> _path;
 
     std::map<std::string, std::shared_ptr<rnn>> _ann;
 

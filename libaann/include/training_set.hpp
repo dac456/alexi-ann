@@ -10,7 +10,7 @@ struct frame_data{
     double rw, rl;
 
     double x, y;
-    double px, py;
+    int px, py;
     double dx, dy;
     double dx_last, dy_last;
     double theta;
