@@ -14,6 +14,7 @@ inline int32_t t_idx(size_t L, int32_t t){
 
 rnn::rnn(size_t input_dim, size_t hidden_layer_dim, size_t output_dim)
     : _observed_examples(0)
+    , _learning_rate(0.00001)
     , _input_dim(input_dim)
     , _hidden_layer_dim(hidden_layer_dim)
     , _output_dim(output_dim)
@@ -23,9 +24,9 @@ rnn::rnn(size_t input_dim, size_t hidden_layer_dim, size_t output_dim)
     _output_weights.resize(output_dim, hidden_layer_dim);
 
     blaze::Rand< blaze::DynamicMatrix<double> > rndMat;
-    rndMat.randomize(_input_weights, 0.0, 0.05);
-    rndMat.randomize(_hidden_weights, 0.0, 0.05);
-    rndMat.randomize(_output_weights, 0.0, 0.05);
+    rndMat.randomize(_input_weights, 0.0, 0.01);
+    rndMat.randomize(_hidden_weights, 0.0, 0.01);
+    rndMat.randomize(_output_weights, 0.0, 0.01);
 
     _squared_error.resize(output_dim);
     _squared_error = 0.0;
@@ -68,24 +69,29 @@ void rnn::set_output_activation_function_dx(std::function<double(double)> fn){
 bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output, fs::path output_base_name, size_t series_length){
     const size_t L = series_length;
 
-    for(size_t epoch = 0; epoch < 10; epoch++){
+    for(size_t epoch = 0; epoch < 500; epoch++){
         std::cout << "Starting epoch " << epoch << "..." << std::endl;
 
+        std::vector<size_t> indices;
         for(size_t series = 0; series < floor(input.columns() / L); series++){
+            indices.push_back(series);
+        }
+        //std::random_shuffle(indices.begin(), indices.end());
+
+        for(auto idx : indices){
             blaze::DynamicMatrix<double> X(_input_dim + _output_dim, L);
             blaze::DynamicMatrix<double> Y(_output_dim, L);
 
             for(size_t i = 0; i < L; i++){
                 for(size_t j = 0; j < _input_dim; j++){
-                    X(j,i) = input(j,i);
+                    X(j,i) = input(j, (idx*L) + i);
                 }
                 for(size_t j = _input_dim; j < (_input_dim + _output_dim); j++){
                     X(j,i) = 0.0;
                 }
             }
             for(size_t i = 0; i < L; i++){
-                //column(X, i) = column(input, (series*L) + i);
-                column(Y, i) = column(output, (series*L) + i);
+                column(Y, i) = column(output, (idx*L) + i);
             }
 
             blaze::DynamicMatrix<double> o(_output_dim, L);
@@ -145,7 +151,7 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     e[i] *= _hidden_activation_function_dx(z(i, t));
                 }
 
-                for(int32_t tau = t /*+ 1*/; tau >= std::max(0, t-5); --tau){
+                for(int32_t tau = t /*+ 1*/; tau >= std::max(0, t-25); --tau){
                     hidden_weights_delta += e * trans(column(s, t_idx(L,tau-1)));
                     input_weights_delta += e * trans(column(X, tau));
 
@@ -157,13 +163,18 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                 }
             }
 
-            _input_weights -= 0.00001 * input_weights_delta;
-            _hidden_weights -= 0.00001 * hidden_weights_delta;
-            _output_weights -= 0.00001 * output_weights_delta;
+            _input_weights -= _learning_rate * input_weights_delta;
+            _hidden_weights -= _learning_rate * hidden_weights_delta;
+            _output_weights -= _learning_rate * output_weights_delta;
         }
 
         std::cout << "Error: " << _squared_error << std::endl;
-        //if(_squared_error[0] <= 0.00000000002){
+        _errors.push_back(_squared_error[0]);
+        if(_errors.size() > 1 && _errors[_errors.size()-1] > _errors[_errors.size()-2]){
+            _learning_rate *= 0.25;
+            std::cout << "adjusting learning rate" << std::endl;
+        }
+        //if(_squared_error[0] <= 2e-13){
         //    break;
         //}
     }
@@ -223,5 +234,15 @@ blaze::DynamicVector<double, blaze::columnVector> rnn::predict(blaze::DynamicMat
     }
     avg /= L;
     return avg;*/
-    return column(output, 0);
+    //return column(output, 0);
+    //return column(output, L-1);
+
+    blaze::DynamicVector<double, blaze::columnVector> avg(output.rows());
+    avg = 0.0;
+
+    for(int32_t i = 0; i < avg.size(); i++){
+        avg[i] = output(i,0) + output(i,L-1);
+    }
+    avg /= 2.0;
+    return avg;
 }

@@ -14,7 +14,7 @@ class platform{
 private:
     size_t _ticks;
     double _rand;
-    
+
     SDL_Surface* _display;
     std::map<std::string, std::shared_ptr<rnn>> _ann;
 

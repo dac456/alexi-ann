@@ -33,7 +33,7 @@ platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>
 }
 
 void platform::step(double width, double height){
-    const size_t interval = 4000;
+    const size_t interval = 2000;
 
     if(_ticks < interval){
         _desired_linear_velocity = _rand * 3.0f;
@@ -73,9 +73,12 @@ void platform::step(double width, double height){
     }
 
     _ticks++;
+    //_desired_linear_velocity = 0.0f;
+    //_desired_angular_velocity = 1.8f;
     _move();
 
     std::cout << "pitch: " << _imu->get_accel_pitch() << std::endl;
+    std::cout << "roll: " << _imu->get_accel_roll() << std::endl;
     std::cout << _left << " " << _right << std::endl;
     //float in[3] = {_left, _right, _imu->get_accel_pitch()};
     /*if(_num_inputs < 50){
@@ -86,13 +89,13 @@ void platform::step(double width, double height){
     }*/
 
     blaze::DynamicVector<double, blaze::columnVector> in_dx_current(4);
-    in_dx_current = {_left, _right, _imu->get_accel_pitch(), _last_dx};
+    in_dx_current = {_left, _right, _imu->get_accel_pitch()/*, _imu->get_accel_roll()*/, _last_dx};
 
     blaze::DynamicVector<double, blaze::columnVector> in_dy_current(4);
-    in_dy_current = {_left, _right, _imu->get_accel_pitch(), _last_dy};
+    in_dy_current = {_left, _right, _imu->get_accel_pitch()/*, _imu->get_accel_roll()*/, _last_dy};
 
     blaze::DynamicVector<double, blaze::columnVector> in_dtheta_current(4);
-    in_dtheta_current = {_left, _right, _imu->get_accel_pitch(), _last_dtheta};
+    in_dtheta_current = {_left, _right, _imu->get_accel_pitch()/*, _imu->get_accel_roll()*/, _last_dtheta};
 
     for(size_t i = 0; i < _num_inputs-1; i++){
         column(_input_dx, i) = column(_input_dx, i+1);
@@ -116,16 +119,19 @@ void platform::step(double width, double height){
     _last_dtheta = out_dtheta[0];
 
     float speed = sqrt( pow(out_dx[0], 2.0) + pow(out_dy[0], 2.0) );
+
     if(_desired_linear_velocity < 0.0f){
         speed *= -1.0f;
     }
 
-    if(_desired_angular_velocity > 0){
+    /*if(_desired_angular_velocity > 0){
         _yaw -= out_dtheta[0];
     }
     else{
         _yaw += out_dtheta[0];
-    }
+    }*/
+    _yaw += out_dtheta[0];
+
     _pos_x += speed*cos(_yaw);
     _pos_y += speed*sin(_yaw);
     //_pos_x += out_dx[0];

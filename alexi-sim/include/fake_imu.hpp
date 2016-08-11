@@ -14,6 +14,7 @@ private:
     double _yaw;
 
     std::vector<double> _pitch_samples;
+    std::vector<double> _roll_samples;
 
 public:
     fake_imu(terrain_ptr terrain);
@@ -21,6 +22,10 @@ public:
     void update(std::pair<size_t,size_t> pixel_pos, double yaw);
 
     double get_accel_pitch();
+    double get_accel_roll();
+
+    std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>> get_debug_forward();
+    std::pair<std::pair<size_t,size_t>,std::pair<size_t,size_t>> get_debug_right();
 
 };
 

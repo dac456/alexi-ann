@@ -17,6 +17,7 @@ struct frame_data{
     double dtheta;
     double dtheta_last;
     double pitch;
+    double roll;
 
     double v;
     double w;

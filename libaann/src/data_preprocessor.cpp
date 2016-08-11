@@ -323,6 +323,7 @@ frame_data data_preprocessor::_parse_frame(fs::path file){
         ("vtheta", po::value<double>())
         ("vdtheta", po::value<double>())
         ("vpitch", po::value<double>())
+        ("vroll", po::value<double>()->default_value(0.0))
 
         ("vdl", po::value<double>())
         ("vda", po::value<double>())
@@ -365,6 +366,7 @@ frame_data data_preprocessor::_parse_frame(fs::path file){
     out.theta = vm["vtheta"].as<double>();
     out.dtheta = vm["vdtheta"].as<double>();
     out.pitch = vm["vpitch"].as<double>();
+    out.roll = vm["vroll"].as<double>();
 
     out.v = vm["vdl"].as<double>();
     out.w = vm["vda"].as<double>();

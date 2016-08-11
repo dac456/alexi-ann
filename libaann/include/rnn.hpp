@@ -7,6 +7,8 @@ class rnn{
 private:
     blaze::DynamicVector<double, blaze::columnVector> _squared_error;
     size_t _observed_examples;
+    double _learning_rate;
+    std::vector<double> _errors;
 
     size_t _input_dim;
     size_t _hidden_layer_dim;

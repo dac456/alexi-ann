@@ -57,6 +57,10 @@ double log_semisig_dx(double value){
     }
 }
 
+double softplus(double value){
+    return log(1 + exp(value));
+}
+
 experiment::experiment(SDL_Surface* disp, fs::path cfg)
     : _display(disp)
     , _last_terrain_update(nullptr)
@@ -118,20 +122,20 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
 
         //std::pair<size_t,size_t> vehicle_position = _real_pos_to_pixel_pos(std::make_pair(opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>()));
         _ann["dx"] = std::make_shared<rnn>("rnn_dx");
-        _ann["dx"]->set_hidden_activation_function(log_semisig);
-        _ann["dx"]->set_hidden_activation_function_dx(log_semisig_dx);
+        _ann["dx"]->set_hidden_activation_function(linear);
+        _ann["dx"]->set_hidden_activation_function_dx(linear_dx);
         _ann["dx"]->set_output_activation_function(linear);
         _ann["dx"]->set_output_activation_function_dx(linear_dx);
 
         _ann["dy"] = std::make_shared<rnn>("rnn_dy");
-        _ann["dy"]->set_hidden_activation_function(log_semisig);
-        _ann["dy"]->set_hidden_activation_function_dx(log_semisig_dx);
+        _ann["dy"]->set_hidden_activation_function(linear);
+        _ann["dy"]->set_hidden_activation_function_dx(linear_dx);
         _ann["dy"]->set_output_activation_function(linear);
         _ann["dy"]->set_output_activation_function_dx(linear_dx);
 
         _ann["dtheta"] = std::make_shared<rnn>("rnn_dtheta");
-        _ann["dtheta"]->set_hidden_activation_function(sigmoid);
-        _ann["dtheta"]->set_hidden_activation_function_dx(sigmoid_dx);
+        _ann["dtheta"]->set_hidden_activation_function(log_semisig);
+        _ann["dtheta"]->set_hidden_activation_function_dx(log_semisig_dx);
         _ann["dtheta"]->set_output_activation_function(linear);
         _ann["dtheta"]->set_output_activation_function_dx(linear_dx);
 
@@ -224,6 +228,19 @@ void experiment::step(){
         _terrain->update();
     }
 
+
+    _path.push_back(std::make_pair(plot_pos.first, plot_pos.second));
+
+    //Draw paths
+    for(size_t i = 0; i < _ref_path.size(); i += 4){
+        circleRGBA(_display, _ref_path[i].second, _ref_path[i].first, 2, 0, 0, 255, 127);
+    }
+
+    for(size_t i = 0; i < _path.size(); i += 4){
+        circleRGBA(_display, _path[i].first, _path[i].second, 2, 255, 255, 0, 127);
+    }
+
+    //Draw vehicle
     circleRGBA(_display, plot_pos.first, plot_pos.second, 16, 255, 0, 0, 255);
 
     const double yaw = _platform->get_yaw();
@@ -233,15 +250,11 @@ void experiment::step(){
     size_t forward_rx = forward_x * cos(yaw) - forward_y * sin(yaw);
     size_t forward_ry = forward_x * sin(yaw) + forward_y * cos(yaw);
     circleRGBA(_display, plot_pos.first + forward_rx, plot_pos.second + forward_ry, 4, 0, 255, 0, 255);
-    _path.push_back(std::make_pair(plot_pos.first, plot_pos.second));
 
-    for(size_t i = 0; i < _ref_path.size(); i += 4){
-        circleRGBA(_display, _ref_path[i].second, _ref_path[i].first, 2, 0, 0, 255, 127);
-    }
-
-    for(size_t i = 0; i < _path.size(); i += 4){
-        circleRGBA(_display, _path[i].first, _path[i].second, 2, 255, 255, 0, 127);
-    }
+    /*circleRGBA(_display, _imu->get_debug_forward().first.first, _imu->get_debug_forward().first.second, 4, 255, 255, 255, 255);
+    circleRGBA(_display, _imu->get_debug_forward().second.first, _imu->get_debug_forward().second.second, 4, 255, 255, 255, 255);
+    circleRGBA(_display, _imu->get_debug_right().first.first, _imu->get_debug_right().first.second, 4, 255, 255, 255, 255);
+    circleRGBA(_display, _imu->get_debug_right().second.first, _imu->get_debug_right().second.second, 4, 255, 255, 255, 255);*/
 
     SDL_Flip(_display);
 }

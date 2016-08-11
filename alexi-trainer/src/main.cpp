@@ -62,6 +62,10 @@ double log_semisig_dx(double value){
     }
 }
 
+double softplus(double value){
+    return log(1 + exp(value));
+}
+
 int main(int argc, char* argv[])
 {
     //Get options
@@ -72,6 +76,7 @@ int main(int argc, char* argv[])
         ("batchsize", po::value<int>()->default_value(1))
         ("numhidden", po::value<int>()->default_value(1))
         ("hiddensize", po::value<int>()->default_value(20))
+        ("reloaddata", po::value<bool>()->default_value(true))
     ;
 
     po::variables_map vm;
@@ -107,44 +112,40 @@ int main(int argc, char* argv[])
         set_paths.push_back(fs::path(path));
     }
 
-    data_preprocessor preproc(set_paths);
-    //preproc.run_processor(AVERAGE);
+    if(vm["reloaddata"].as<bool>()){
+        data_preprocessor preproc(set_paths);
+        //preproc.run_processor(AVERAGE);
 
-    training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
-    tset_dx.save_blaze_data("./rnn_dx");
+        training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
+        tset_dx.save_blaze_data("./rnn_dx");
 
-    training_set tset_dy(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DY);
-    tset_dy.save_blaze_data("./rnn_dy");
+        training_set tset_dy(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DY);
+        tset_dy.save_blaze_data("./rnn_dy");
 
-    training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
-    tset_dtheta.save_blaze_data("./rnn_dtheta");
+        training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
+        tset_dtheta.save_blaze_data("./rnn_dtheta");
+    }
 
-    rnn rnn_dx(3, 100, 1);
-    rnn_dx.set_hidden_activation_function(log_semisig);
-    rnn_dx.set_hidden_activation_function_dx(log_semisig_dx);
+    /*rnn rnn_dx(3, 65, 1);
+    rnn_dx.set_hidden_activation_function(linear);
+    rnn_dx.set_hidden_activation_function_dx(linear_dx);
     rnn_dx.set_output_activation_function(linear);
     rnn_dx.set_output_activation_function_dx(linear_dx);
-    rnn_dx.train("./rnn_dx", "./rnn_dx", 200);
+    rnn_dx.train("./rnn_dx", "./rnn_dx", 100);
 
-    rnn rnn_dy(3, 100, 1);
-    rnn_dy.set_hidden_activation_function(log_semisig);
-    rnn_dy.set_hidden_activation_function_dx(log_semisig_dx);
+    rnn rnn_dy(3, 65, 1);
+    rnn_dy.set_hidden_activation_function(linear);
+    rnn_dy.set_hidden_activation_function_dx(linear_dx);
     rnn_dy.set_output_activation_function(linear);
     rnn_dy.set_output_activation_function_dx(linear_dx);
-    rnn_dy.train("./rnn_dy", "./rnn_dy", 200);
+    rnn_dy.train("./rnn_dy", "./rnn_dy", 100);*/
 
-    /*rnn rnn_dtheta(3, 5, 1);
-    rnn_dtheta.set_hidden_activation_function(linear);
-    rnn_dtheta.set_hidden_activation_function_dx(linear_dx);
+    rnn rnn_dtheta(3, 300, 1);
+    rnn_dtheta.set_hidden_activation_function(log_semisig);
+    rnn_dtheta.set_hidden_activation_function_dx(log_semisig_dx);
     rnn_dtheta.set_output_activation_function(linear);
     rnn_dtheta.set_output_activation_function_dx(linear_dx);
-    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta", 100);*/
-    /*rnn rnn_dtheta(3, 25, 1);
-    rnn_dtheta.set_hidden_activation_function(sigmoid);
-    rnn_dtheta.set_hidden_activation_function_dx(sigmoid_dx);
-    rnn_dtheta.set_output_activation_function(linear);
-    rnn_dtheta.set_output_activation_function_dx(linear_dx);
-    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta", 100);*/
+    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta", 50);
 
     /*data_preprocessor preproc(set_paths);
     //preproc.run_processor(AVERAGE);
