@@ -14,6 +14,7 @@ public:
     ~fann_ffn();
 
     void train(fs::path file, fs::path output_file);
+    double test(fs::path file);
     float* predict(float* input);
 
 };

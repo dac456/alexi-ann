@@ -39,6 +39,7 @@ int main(int argc, char* argv[]){
         resize_window(surf, expr.get_terrain()->get_display_width(), expr.get_terrain()->get_display_height());
         std::cout << expr.get_terrain()->get_display_width() << " " << expr.get_terrain()->get_display_height() << std::endl;
 
+        static size_t frame_count = 0;
         std::chrono::steady_clock::time_point last_time = std::chrono::steady_clock::now();
         while(running){
             while(SDL_PollEvent(&evt)){
@@ -47,11 +48,16 @@ int main(int argc, char* argv[]){
                 }
             }
 
-            if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_time) >= std::chrono::milliseconds(1)){
+            if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - last_time) >= std::chrono::milliseconds(10)){
                 expr.step();
                 last_time = std::chrono::steady_clock::now();
+
+                frame_count++;
+                if(frame_count > 32000) running = false;
             }
         }
+
+        for(;;){}
 
     }
 

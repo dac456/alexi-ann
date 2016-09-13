@@ -8,7 +8,9 @@
 std::default_random_engine generator;
 std::uniform_real_distribution<double> distribution(0.25, 1.0);
 
-platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>> ann, fake_imu_ptr imu, double init_x, double init_y)
+std::ofstream platform::_log = std::ofstream("./path.csv");
+
+platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<fann_ffn>> ann, fake_imu_ptr imu, double init_x, double init_y)
     : _ticks(0)
     , _rand(0.0)
     , _display(disp)
@@ -24,16 +26,16 @@ platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>
     , _right(0.0)
     , _num_inputs(50)
 {
-    _input_dx.resize(4, _num_inputs);
+    _input_dx.resize(3, _num_inputs);
     _input_dx = 0.0;
-    _input_dy.resize(4, _num_inputs);
+    _input_dy.resize(3, _num_inputs);
     _input_dy = 0.0;
-    _input_dtheta.resize(4, _num_inputs);
+    _input_dtheta.resize(3, _num_inputs);
     _input_dtheta = 0.0;
 }
 
 void platform::step(double width, double height){
-    const size_t interval = 2000;
+    const size_t interval = 4000;
 
     if(_ticks < interval){
         _desired_linear_velocity = _rand * 3.0f;
@@ -88,37 +90,63 @@ void platform::step(double width, double height){
         _input_dtheta.resize(4, _num_inputs);
     }*/
 
-    blaze::DynamicVector<double, blaze::columnVector> in_dx_current(4);
-    in_dx_current = {_left, _right, _imu->get_accel_pitch()/*, _imu->get_accel_roll()*/, _last_dx};
+    //blaze::DynamicVector<double, blaze::columnVector> in_dx_current(4);
+    float in_dx_current[5] = {_left, _right, _imu->get_accel_pitch(), _imu->get_accel_roll(), _last_dx};
+    //in_dx_current = {_desired_linear_velocity, _desired_angular_velocity, _imu->get_accel_pitch(), _last_dx};
 
-    blaze::DynamicVector<double, blaze::columnVector> in_dy_current(4);
-    in_dy_current = {_left, _right, _imu->get_accel_pitch()/*, _imu->get_accel_roll()*/, _last_dy};
+    //blaze::DynamicVector<double, blaze::columnVector> in_dy_current(4);
+    float in_dy_current[5] = {_left, _right, _imu->get_accel_pitch(), _imu->get_accel_roll(), _last_dy};
+    //in_dy_current = {_desired_linear_velocity, _desired_angular_velocity, _imu->get_accel_pitch(), _last_dy};
 
-    blaze::DynamicVector<double, blaze::columnVector> in_dtheta_current(4);
-    in_dtheta_current = {_left, _right, _imu->get_accel_pitch()/*, _imu->get_accel_roll()*/, _last_dtheta};
+    //blaze::DynamicVector<double, blaze::columnVector> in_dtheta_current(4);
+    float in_dtheta_current[5] = {_left, _right, _imu->get_accel_pitch(), _imu->get_accel_roll(), _last_dtheta};
+    //in_dtheta_current = {_desired_linear_velocity, _desired_angular_velocity, _imu->get_accel_pitch(), _last_dtheta};
+
+    double stats[5][2];
+    std::ifstream fin("./stats.dat");
+    std::string line;
+    int idx = 0;
+    while(std::getline(fin, line)) {
+        std::istringstream iss(line);
+        iss >> stats[idx][0] >> stats[idx][1];
+        idx++;
+    }
+
+    //float in[3] = {(_left - stats[0][0])/stats[0][1], (_right - stats[1][0])/stats[1][1], (_imu->get_accel_pitch() - stats[2][0])/stats[2][1]/*, _imu->get_accel_roll()*/};
+    float norm_left = (_left - ((stats[0][0]+stats[0][1])/2.0))/((stats[0][0]-stats[0][1])/2.0);
+    float norm_right = (_right - ((stats[1][0]+stats[1][1])/2.0))/((stats[1][0]-stats[1][1])/2.0);
+    float norm_pitch = (_imu->get_accel_pitch() - ((stats[2][0]+stats[2][1])/2.0))/((stats[2][0]-stats[2][1])/2.0);
+    float norm_roll = (_imu->get_accel_roll() - ((stats[3][0]+stats[3][1])/2.0))/((stats[3][0]-stats[3][1])/2.0);
+    float in[4] = {norm_left, norm_right, norm_pitch, norm_roll};
 
     for(size_t i = 0; i < _num_inputs-1; i++){
         column(_input_dx, i) = column(_input_dx, i+1);
         column(_input_dy, i) = column(_input_dy, i+1);
         column(_input_dtheta, i) = column(_input_dtheta, i+1);
     }
-    column(_input_dx, _num_inputs-1) = in_dx_current;
-    column(_input_dy, _num_inputs-1) = in_dy_current;
-    column(_input_dtheta, _num_inputs-1) = in_dtheta_current;
+    //column(_input_dx, _num_inputs-1) = in/*_dx_current*/;
+    //column(_input_dy, _num_inputs-1) = in/*_dy_current*/;
+    //column(_input_dtheta, _num_inputs-1) = in/*_dtheta_current*/;
 
-    blaze::DynamicVector<double, blaze::columnVector> out_dx = _ann["dx"]->predict(_input_dx);
-    blaze::DynamicVector<double, blaze::columnVector> out_dy = _ann["dy"]->predict(_input_dy);
-    blaze::DynamicVector<double, blaze::columnVector> out_dtheta = _ann["dtheta"]->predict(_input_dtheta);
-    if(_desired_linear_velocity == 0.0 && _desired_angular_velocity == 0.0){
-        out_dx = 0.0;
-        out_dy = 0.0;
-        out_dtheta = 0.0;
+
+
+    float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dx = _ann["dx"]->predict(in/*_input_dx*/);
+    float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dy = _ann["dy"]->predict(in/*_input_dy*/);
+    float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dtheta = _ann["dtheta"]->predict(in/*_input_dtheta*/);
+    //out_dtheta[0] = out_dtheta[0]*((stats[4][0]-stats[4][1])/2.0) + ((stats[4][0]+stats[4][1])/2.0);
+    if(_desired_linear_velocity == 0.0/* && _desired_angular_velocity == 0.0*/){
+        out_dx[0] *= 0.25;
+        out_dy[0] *= 0.25;
+        //out_dtheta[0] = 0.0;
     }
+    //if(_desired_angular_velocity == 0.0f){
+    //    out_dtheta[0] = 0.0;
+    //}
     _last_dx = out_dx[0];
     _last_dy = out_dy[0];
     _last_dtheta = out_dtheta[0];
 
-    float speed = sqrt( pow(out_dx[0], 2.0) + pow(out_dy[0], 2.0) );
+    float speed = sqrt( pow(out_dx[0]*1.0, 2.0) + pow(out_dy[0]*1.0, 2.0) );
 
     if(_desired_linear_velocity < 0.0f){
         speed *= -1.0f;
@@ -130,12 +158,14 @@ void platform::step(double width, double height){
     else{
         _yaw += out_dtheta[0];
     }*/
-    _yaw += out_dtheta[0];
+    _yaw += out_dtheta[0]*-1.0;
 
     _pos_x += speed*cos(_yaw);
     _pos_y += speed*sin(_yaw);
     //_pos_x += out_dx[0];
     //_pos_y += out_dy[0];
+
+    _log << norm_left << "," << norm_right << "," << norm_pitch << "," << norm_roll << "," << out_dx[0]*2.5 << "," << out_dy[0]*2.5 << "," << out_dtheta[0]*-3.0 << std::endl;
 
     if(_pos_x > width * 0.5){
         _pos_x -= width;

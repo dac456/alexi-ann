@@ -45,10 +45,9 @@ double softsign_dx(double value){
 }
 
 double log_semisig(double value){
-    if(value > 0){
+    if(value > 0) {
         return log(value + 1.0);
-    }
-    else{
+    } else{
         return -log(fabs(value) + 1.0);
     }
 }
@@ -56,14 +55,33 @@ double log_semisig(double value){
 double log_semisig_dx(double value){
     if(value > 0){
         return 1.0 / (value + 1.0);
-    }
-    else{
+    } else{
         return -1.0 / (fabs(value) + 1.0);
     }
 }
 
 double softplus(double value){
     return log(1 + exp(value));
+}
+
+double ramp(double value){
+    return std::max(value, 0.0);
+}
+
+double ramp_dx(double value){
+    if(value < 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+double sigmoid_sinh(double value){
+    return (exp(value) - exp(-value)) * 0.5;
+}
+
+double sigmoid_cosh(double value){
+    return (exp(value) + exp(-value)) * 0.5;
 }
 
 int main(int argc, char* argv[])
@@ -114,66 +132,71 @@ int main(int argc, char* argv[])
 
     if(vm["reloaddata"].as<bool>()){
         data_preprocessor preproc(set_paths);
+        preproc.run_processor(FILTER);
         //preproc.run_processor(AVERAGE);
+        //preproc.run_processor(THRESHOLD);
+        preproc.run_processor(LOWPASS);
+        preproc.run_processor(NORMALIZE);
+
+        preproc.write_csv("./dx.csv", 0);
+        preproc.write_csv("./dy.csv", 1);
+        preproc.write_csv("./dtheta.csv", 2);
+        preproc.write_csv("./pitch.csv", 3);
 
         training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
         tset_dx.save_blaze_data("./rnn_dx");
+        tset_dx.save_fann_data("./fann_ffn_dx.data");
 
         training_set tset_dy(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DY);
         tset_dy.save_blaze_data("./rnn_dy");
+        tset_dy.save_fann_data("./fann_ffn_dy.data");
 
         training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
         tset_dtheta.save_blaze_data("./rnn_dtheta");
+        tset_dtheta.save_fann_data("./fann_ffn_dtheta.data");
     }
 
-    /*rnn rnn_dx(3, 65, 1);
-    rnn_dx.set_hidden_activation_function(linear);
-    rnn_dx.set_hidden_activation_function_dx(linear_dx);
+    /*rnn rnn_dx(3, 100, 1);
+    rnn_dx.set_hidden_activation_function(sigmoid_sinh);
+    rnn_dx.set_hidden_activation_function_dx(sigmoid_cosh);
     rnn_dx.set_output_activation_function(linear);
     rnn_dx.set_output_activation_function_dx(linear_dx);
-    rnn_dx.train("./rnn_dx", "./rnn_dx", 100);
+    rnn_dx.train("./rnn_dx", "./rnn_dx", 250);
 
-    rnn rnn_dy(3, 65, 1);
-    rnn_dy.set_hidden_activation_function(linear);
-    rnn_dy.set_hidden_activation_function_dx(linear_dx);
+    rnn rnn_dy(3, 100, 1);
+    rnn_dy.set_hidden_activation_function(sigmoid_sinh);
+    rnn_dy.set_hidden_activation_function_dx(sigmoid_cosh);
     rnn_dy.set_output_activation_function(linear);
     rnn_dy.set_output_activation_function_dx(linear_dx);
-    rnn_dy.train("./rnn_dy", "./rnn_dy", 100);*/
+    rnn_dy.train("./rnn_dy", "./rnn_dy", 250);
 
-    rnn rnn_dtheta(3, 300, 1);
-    rnn_dtheta.set_hidden_activation_function(log_semisig);
-    rnn_dtheta.set_hidden_activation_function_dx(log_semisig_dx);
+    rnn rnn_dtheta(3, 5, 1);
+    rnn_dtheta.set_hidden_activation_function(linear);
+    rnn_dtheta.set_hidden_activation_function_dx(linear_dx);
     rnn_dtheta.set_output_activation_function(linear);
     rnn_dtheta.set_output_activation_function_dx(linear_dx);
-    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta", 50);
+    rnn_dtheta.train("./rnn_dtheta", "./rnn_dtheta", 5);*/
 
     /*data_preprocessor preproc(set_paths);
     //preproc.run_processor(AVERAGE);
-    //preproc.run_processor(THRESHOLD);
+    //preproc.run_processor(THRESHOLD);*/
 
-    training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
-    tset_dx.save_fann_data("./fann_ffn_dx.data");
 
-    training_set tset_dy(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DY);
-    tset_dy.save_fann_data("./fann_ffn_dy.data");
+    //training_set tset_terrain(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), TERRAIN);
+    //tset_terrain.save_fann_data("./fann_ffn_terrain.data");
 
-    training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
-    tset_dtheta.save_fann_data("./fann_ffn_dtheta.data");
-
-    training_set tset_terrain(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), TERRAIN);
-    tset_terrain.save_fann_data("./fann_ffn_terrain.data");
-
-    fann_ffn ffn_dx(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    // 1 20
+    fann_ffn ffn_dx(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
     ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");
 
-    fann_ffn ffn_dy(5, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>());
+    fann_ffn ffn_dy(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
     ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net");
 
-    fann_ffn ffn_dtheta(5, 1, vm["numhidden"].as<int>(), 4, FANN_SIGMOID);
+    fann_ffn ffn_dtheta(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
     ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");
 
-    fann_ffn ffn_terrain(262, 256, 8, 64, FANN_SIGMOID);
-    ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");*/
+    //fann_ffn ffn_terrain(262, 256, 8, 64, FANN_SIGMOID);
+    //ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");*/
 
     /*float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};
     float* out = test_ffn.predict(test);

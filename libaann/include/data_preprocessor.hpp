@@ -6,7 +6,11 @@
 
 enum PREPROCESSOR{
     AVERAGE,
-    THRESHOLD
+    THRESHOLD,
+    ACCUMULATE,
+    FILTER,
+    NORMALIZE,
+    LOWPASS,
 };
 
 class data_preprocessor{
@@ -19,15 +23,22 @@ public:
     data_preprocessor(std::vector<fs::path> set_paths);
 
     void run_processor(PREPROCESSOR proc_type);
+    void write_csv(fs::path p, int mode);
+
     std::vector<frame_data> get_frames();
     std::vector<std::array<double,256>> get_images();
     std::vector<std::array<double,256>> get_diff_images();
+
 
 private:
     int _wrap_value(int value, int size);
 
     void _average_frames(size_t block_size);
     void _threshold_frames(double interval);
+    void _accumulate_frames(size_t block_size);
+    void _filter_frames();
+    void _normalize_frames(int mode);
+    void _lowpass_frames(double alpha);
 
     frame_data _parse_frame(fs::path file);
 };

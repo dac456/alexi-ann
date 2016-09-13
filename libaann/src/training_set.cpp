@@ -61,7 +61,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     , _type(type)
 {
     if(type != TERRAIN){
-        _input_set.resize(3, frames.size());
+        _input_set.resize(4, frames.size());
     }
     else{
         _input_set.resize(262, frames.size());
@@ -86,18 +86,22 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
     if(_type != TERRAIN){
         for(size_t i = 0; i < _frames.size(); i++){
             frame_data data = _frames[i];
-            column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.left, data.right, data.pitch/*, data.roll*/);
+            column(_input_set, i) = blaze::StaticVector<double, 4UL, blaze::columnVector>(data.left, data.right, data.pitch, data.roll);
+            //column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.vdl, data.vda, data.pitch/*, data.roll*/);
 
             switch(type){
                 case DX:
+                //column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.roll, data.dx_last);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dx);
                 break;
 
                 case DY:
+                //column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.roll, data.dy_last);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dy);
                 break;
 
                 case DTHETA:
+                //column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.roll, data.dtheta_last);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dtheta);
                 break;
             }
@@ -133,9 +137,9 @@ void training_set::save_fann_data(fs::path file){
     std::ofstream fout(file.string());
 
     if(_type != TERRAIN){
-        fout << _input_set.columns() << " 5 1" << std::endl;
+        fout << _input_set.columns() << " 4 1" << std::endl;
         for(size_t i = 0; i < _input_set.columns(); i++){
-            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << " " << _input_set(4,i) << std::endl;
+            fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) /*<< " " << _input_set(4,i)*/ << std::endl;
             fout << _target_set(0,i) /*<< " " << _target_set(1,i)*/ << std::endl;
         }
     }

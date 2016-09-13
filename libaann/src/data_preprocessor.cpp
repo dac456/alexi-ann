@@ -175,13 +175,57 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
 void data_preprocessor::run_processor(PREPROCESSOR proc_type){
     switch(proc_type){
         case AVERAGE:
-        _average_frames(40);
+        _average_frames(50);
         break;
 
         case THRESHOLD:
         _threshold_frames(0.01);
         break;
+
+        case ACCUMULATE:
+        _accumulate_frames(25);
+        break;
+
+        case FILTER:
+        _filter_frames();
+        break;
+
+        case NORMALIZE:
+        _normalize_frames(1);
+        break;
+
+        case LOWPASS:
+        _lowpass_frames(0.3);
+        break;
     }
+}
+
+void data_preprocessor::write_csv(fs::path p, int mode) {
+    std::ofstream fout(p.string());
+
+    for(auto frame : _frames) {
+        if(!frame.warped) {
+            switch(mode) {
+                case 0:
+                    fout << frame.left << "," << frame.right << "," << frame.dx << std::endl;
+                break;
+
+                case 1:
+                    fout << frame.left << "," << frame.right << "," << frame.dy << std::endl;
+                break;
+
+                case 2:
+                    fout << frame.left << "," << frame.right << "," << frame.dtheta << std::endl;
+                break;
+
+                case 3:
+                    fout << frame.pitch << std::endl;
+                break;
+            }
+        }
+    }
+
+    fout.close();
 }
 
 std::vector<frame_data> data_preprocessor::get_frames(){
@@ -293,13 +337,274 @@ void data_preprocessor::_average_frames(size_t block_size){
 }
 
 void data_preprocessor::_threshold_frames(double interval){
-    for(size_t i = 0; i < _frames.size(); i++){
-        if(_frames[i].dx < 0.01) _frames[i].dx = 0.0;
-        if(_frames[i].dx > 0.01) _frames[i].dx = 0.01;
-        if(_frames[i].dy < 0.01) _frames[i].dy = 0.0;
-        if(_frames[i].dy > 0.01) _frames[i].dy = 0.01;
-        if(_frames[i].dtheta < 0.05) _frames[i].dtheta = 0.0;
-        if(_frames[i].dtheta > 0.05) _frames[i].dtheta = 0.05;
+    for(auto& frame : _frames) {
+        if(frame.dtheta >= -0.05 && frame.dtheta <= 0.05) {
+            frame.dtheta = 0.0;
+
+            frame.dtheta_class[0] = 0;
+            frame.dtheta_class[1] = 0;
+            frame.dtheta_class[2] = 0;
+            frame.dtheta_class[3] = 0;
+        } else if(frame.dtheta > 0.05 && frame.dtheta <= 0.2) {
+            frame.dtheta = 0.15;
+
+            frame.dtheta_class[0] = 0;
+            frame.dtheta_class[1] = 0;
+            frame.dtheta_class[2] = 0;
+            frame.dtheta_class[3] = 1;
+        } else if(frame.dtheta > 0.2 && frame.dtheta <= 0.4) {
+            frame.dtheta = 0.3;
+
+            frame.dtheta_class[0] = 0;
+            frame.dtheta_class[1] = 0;
+            frame.dtheta_class[2] = 1;
+            frame.dtheta_class[3] = 0;
+        } else if(frame.dtheta > 0.4) {
+            frame.dtheta = 0.6;
+
+            frame.dtheta_class[0] = 0;
+            frame.dtheta_class[1] = 1;
+            frame.dtheta_class[2] = 0;
+            frame.dtheta_class[3] = 0;
+        } else if(frame.dtheta < -0.05 && frame.dtheta >= -0.2) {
+            frame.dtheta = -0.15;
+
+            frame.dtheta_class[0] = 1;
+            frame.dtheta_class[1] = 0;
+            frame.dtheta_class[2] = 0;
+            frame.dtheta_class[3] = 1;
+        } else if(frame.dtheta < -0.2 && frame.dtheta >= -0.4) {
+            frame.dtheta = -0.3;
+
+            frame.dtheta_class[0] = 1;
+            frame.dtheta_class[1] = 0;
+            frame.dtheta_class[2] = 1;
+            frame.dtheta_class[3] = 0;
+        } else if(frame.dtheta < -0.4) {
+            frame.dtheta = -0.6;
+
+            frame.dtheta_class[0] = 1;
+            frame.dtheta_class[1] = 1;
+            frame.dtheta_class[2] = 0;
+            frame.dtheta_class[3] = 0;
+        }
+    }
+}
+
+void data_preprocessor::_accumulate_frames(size_t block_size){
+    std::vector<frame_data> new_frames;
+
+    for(size_t i = 0; i < _frames.size(); i += block_size){
+        frame_data f = _frames[i];
+
+        double accum_dx = 0.0;
+        double accum_dy = 0.0;
+        double accum_dtheta = 0.0;
+
+        double avg_left = 0.0;
+        double avg_right = 0.0;
+
+        for(size_t j = i; j < i + block_size; j++){
+            accum_dx += _frames[i].dx;
+            accum_dy += _frames[i].dy;
+            accum_dtheta += _frames[i].dtheta;
+
+            avg_left += _frames[i].left;
+            avg_right += _frames[i].right;
+        }
+        avg_left /= static_cast<double>(block_size);
+        avg_right /= static_cast<double>(block_size);
+
+        f.dx = accum_dx;
+        f.dy = accum_dy;
+        f.dtheta = accum_dtheta;
+        f.left = avg_left;
+        f.right = avg_right;
+
+        new_frames.push_back(f);
+    }
+
+    _frames = new_frames;
+}
+
+void data_preprocessor::_filter_frames() {
+    bool restart = true;
+
+    while(restart) {
+        bool found = false;
+        for(size_t i = 0; i < _frames.size(); i++) {
+            if(_frames[i].dtheta > 0.25 || _frames[i].dtheta < -0.25) {
+                _frames.erase(_frames.begin() + i);
+
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            restart = false;
+        }
+    }
+}
+
+void data_preprocessor::_normalize_frames(int mode) {
+    std::ofstream fout("./stats.dat");
+    double mean = 0.0;
+    double dev = 0.0;
+    double min = 0.0;
+    double max = 0.0;
+
+    switch(mode) {
+        case 0:
+        //vLeft
+        for(auto& frame : _frames) {
+            mean += frame.left;
+        }
+        mean /= (double)_frames.size();
+
+        for(auto& frame : _frames) {
+            dev += pow(frame.left - mean, 2.0);
+        }
+        dev /= (double)_frames.size();
+        dev = sqrt(dev);
+
+        for(auto& frame : _frames) {
+            frame.left = (frame.left - mean) / dev;
+        }
+        fout << mean << " " << dev << std::endl;
+
+
+        //vRight
+        mean = 0.0;
+        dev = 0.0;
+
+        for(auto& frame : _frames) {
+            mean += frame.right;
+        }
+        mean /= (double)_frames.size();
+
+        for(auto& frame : _frames) {
+            dev += pow(frame.right - mean, 2.0);
+        }
+        dev /= (double)_frames.size();
+        dev = sqrt(dev);
+
+        for(auto& frame : _frames) {
+            frame.right = (frame.right - mean) / dev;
+        }
+        fout << mean << " " << dev << std::endl;
+
+        //pitch
+        mean = 0.0;
+        dev = 0.0;
+
+        for(auto& frame : _frames) {
+            mean += frame.pitch;
+        }
+        mean /= (double)_frames.size();
+
+        for(auto& frame : _frames) {
+            dev += pow(frame.pitch - mean, 2.0);
+        }
+        dev /= (double)_frames.size();
+        dev = sqrt(dev);
+
+        for(auto& frame : _frames) {
+            frame.pitch = (frame.pitch - mean) / dev;
+        }
+        fout << mean << " " << dev << std::endl;
+        break;
+
+        case 1:
+        //vleft
+        max = 0.0;
+        min = 0.0;
+
+        for(auto frame : _frames) {
+            if(frame.left > max) max = frame.left;
+            if(frame.left < min) min = frame.left;
+        }
+        for(auto& frame : _frames) {
+            frame.left = (frame.left - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+
+        //vright
+        max = 0.0;
+        min = 0.0;
+
+        for(auto frame : _frames) {
+            if(frame.right > max) max = frame.right;
+            if(frame.right < min) min = frame.right;
+        }
+        for(auto& frame : _frames) {
+            frame.right = (frame.right - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+
+        //pitch
+        max = 0.0;
+        min = 0.0;
+
+        for(auto frame : _frames) {
+            if(frame.pitch > max) max = frame.pitch;
+            if(frame.pitch < min) min = frame.pitch;
+        }
+        for(auto& frame : _frames) {
+            frame.pitch = (frame.pitch - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+
+        //roll
+        max = 0.0;
+        min = 0.0;
+
+        for(auto frame : _frames) {
+            if(frame.roll > max) max = frame.roll;
+            if(frame.roll < min) min = frame.roll;
+        }
+        for(auto& frame : _frames) {
+            frame.roll = (frame.roll - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+
+        //dtheta
+        max = 0.0;
+        min = 0.0;
+
+        for(auto frame : _frames) {
+            if(frame.dtheta > max) max = frame.dtheta;
+            if(frame.dtheta < min) min = frame.dtheta;
+        }
+        for(auto& frame : _frames) {
+            frame.dtheta = (frame.dtheta - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+        break;
+    }
+
+    fout.close();
+
+}
+
+void data_preprocessor::_lowpass_frames(double alpha) {
+    double beta = 1.0 - alpha;
+
+    /*double avg = 0.0;
+    for(auto frame : _frames) {
+        avg += frame.dtheta;
+    }
+    avg /= _frames.size();*/
+    std::vector<double> s;
+    s.resize(_frames.size());
+    s[0] = _frames[0].dtheta;
+
+    for(size_t i = 1; i < _frames.size(); i++) {
+        s[i] = alpha*_frames[i].dtheta + beta*s[i-1];
+    }
+
+    for(size_t i = 1; i < _frames.size(); i++) {
+        _frames[i].dtheta = s[i];
     }
 }
 
@@ -367,6 +672,9 @@ frame_data data_preprocessor::_parse_frame(fs::path file){
     out.dtheta = vm["vdtheta"].as<double>();
     out.pitch = vm["vpitch"].as<double>();
     out.roll = vm["vroll"].as<double>();
+
+    out.vdl = vm["vdl"].as<double>();
+    out.vda = vm["vda"].as<double>();
 
     out.v = vm["vdl"].as<double>();
     out.w = vm["vda"].as<double>();

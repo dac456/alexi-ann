@@ -16,7 +16,7 @@ private:
     double _rand;
 
     SDL_Surface* _display;
-    std::map<std::string, std::shared_ptr<rnn>> _ann;
+    std::map<std::string, std::shared_ptr<fann_ffn>> _ann;
 
     fake_imu_ptr _imu;
 
@@ -39,8 +39,10 @@ private:
     blaze::DynamicMatrix<double> _input_dtheta;
     size_t _num_inputs;
 
+    static std::ofstream _log;
+
 public:
-    platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<rnn>> ann, fake_imu_ptr imu, double init_x, double init_y);
+    platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<fann_ffn>> ann, fake_imu_ptr imu, double init_x, double init_y);
 
     void step(double width, double height); //OK to pass this info here?
 

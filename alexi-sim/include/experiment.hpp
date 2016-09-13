@@ -20,7 +20,7 @@ private:
     std::vector<std::pair<int,int>> _ref_path;
     std::vector<std::pair<int,int>> _path;
 
-    std::map<std::string, std::shared_ptr<rnn>> _ann;
+    std::map<std::string, std::shared_ptr<fann_ffn>> _ann;
 
     terrain_ptr _terrain;
     platform_ptr _platform;

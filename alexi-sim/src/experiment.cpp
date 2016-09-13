@@ -61,6 +61,26 @@ double softplus(double value){
     return log(1 + exp(value));
 }
 
+double ramp(double value){
+    return std::max(value, 0.0);
+}
+
+double ramp_dx(double value){
+    if(value < 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+double sigmoid_sinh(double value){
+    return (exp(value) - exp(-value)) * 0.5;
+}
+
+double sigmoid_cosh(double value){
+    return (exp(value) + exp(-value)) * 0.5;
+}
+
 experiment::experiment(SDL_Surface* disp, fs::path cfg)
     : _display(disp)
     , _last_terrain_update(nullptr)
@@ -121,23 +141,26 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         _terrain = std::make_shared<terrain>(_display, map_file, _scale);
 
         //std::pair<size_t,size_t> vehicle_position = _real_pos_to_pixel_pos(std::make_pair(opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>()));
-        _ann["dx"] = std::make_shared<rnn>("rnn_dx");
-        _ann["dx"]->set_hidden_activation_function(linear);
-        _ann["dx"]->set_hidden_activation_function_dx(linear_dx);
+        /*_ann["dx"] = std::make_shared<fann_ffn>("rnn_dx");
+        _ann["dx"]->set_hidden_activation_function(sigmoid_sinh);
+        _ann["dx"]->set_hidden_activation_function_dx(sigmoid_cosh);
         _ann["dx"]->set_output_activation_function(linear);
         _ann["dx"]->set_output_activation_function_dx(linear_dx);
 
-        _ann["dy"] = std::make_shared<rnn>("rnn_dy");
-        _ann["dy"]->set_hidden_activation_function(linear);
-        _ann["dy"]->set_hidden_activation_function_dx(linear_dx);
+        _ann["dy"] = std::make_shared<fann_ffn>("rnn_dy");
+        _ann["dy"]->set_hidden_activation_function(sigmoid_sinh);
+        _ann["dy"]->set_hidden_activation_function_dx(sigmoid_cosh);
         _ann["dy"]->set_output_activation_function(linear);
         _ann["dy"]->set_output_activation_function_dx(linear_dx);
 
-        _ann["dtheta"] = std::make_shared<rnn>("rnn_dtheta");
-        _ann["dtheta"]->set_hidden_activation_function(log_semisig);
-        _ann["dtheta"]->set_hidden_activation_function_dx(log_semisig_dx);
+        _ann["dtheta"] = std::make_shared<fann_ffn>("rnn_dtheta");
+        _ann["dtheta"]->set_hidden_activation_function(linear);
+        _ann["dtheta"]->set_hidden_activation_function_dx(linear_dx);
         _ann["dtheta"]->set_output_activation_function(linear);
-        _ann["dtheta"]->set_output_activation_function_dx(linear_dx);
+        _ann["dtheta"]->set_output_activation_function_dx(linear_dx);*/
+        _ann["dx"] = std::make_shared<fann_ffn>("fann_dx.net");
+        _ann["dy"] = std::make_shared<fann_ffn>("fann_dy.net");
+        _ann["dtheta"] = std::make_shared<fann_ffn>("fann_dtheta.net");
 
         //_ann["terrain"] = std::make_shared<fann_ffn>("fann_terrain.net");
         _imu = std::make_shared<fake_imu>(_terrain);
@@ -232,9 +255,9 @@ void experiment::step(){
     _path.push_back(std::make_pair(plot_pos.first, plot_pos.second));
 
     //Draw paths
-    for(size_t i = 0; i < _ref_path.size(); i += 4){
+    /*for(size_t i = 0; i < _ref_path.size(); i += 4){
         circleRGBA(_display, _ref_path[i].second, _ref_path[i].first, 2, 0, 0, 255, 127);
-    }
+    }*/
 
     for(size_t i = 0; i < _path.size(); i += 4){
         circleRGBA(_display, _path[i].first, _path[i].second, 2, 255, 255, 0, 127);

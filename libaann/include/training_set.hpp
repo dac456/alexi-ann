@@ -15,9 +15,13 @@ struct frame_data{
     double dx_last, dy_last;
     double theta;
     double dtheta;
+    int dtheta_class[4];
     double dtheta_last;
     double pitch;
     double roll;
+
+    double vda;
+    double vdl;
 
     double v;
     double w;

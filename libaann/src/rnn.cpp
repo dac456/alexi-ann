@@ -14,18 +14,27 @@ inline int32_t t_idx(size_t L, int32_t t){
 
 rnn::rnn(size_t input_dim, size_t hidden_layer_dim, size_t output_dim)
     : _observed_examples(0)
-    , _learning_rate(0.00001)
+    , _learning_rate(0.0001)
     , _input_dim(input_dim)
     , _hidden_layer_dim(hidden_layer_dim)
     , _output_dim(output_dim)
 {
-    _input_weights.resize(hidden_layer_dim, input_dim + output_dim);
+    _input_weights.resize(hidden_layer_dim, input_dim /*+ output_dim*/);
     _hidden_weights.resize(hidden_layer_dim, hidden_layer_dim);
     _output_weights.resize(output_dim, hidden_layer_dim);
 
     blaze::Rand< blaze::DynamicMatrix<double> > rndMat;
     rndMat.randomize(_input_weights, 0.0, 0.01);
-    rndMat.randomize(_hidden_weights, 0.0, 0.01);
+    //rndMat.randomize(_hidden_weights, 0.0, 0.001);
+    for(size_t i = 0; i < _hidden_weights.rows(); i++) {
+        for(size_t j = 0; j < _hidden_weights.columns(); j++) {
+            if(i == j) {
+                _hidden_weights(i,j) = 0.01;
+            } else {
+                _hidden_weights(i,j) = 0.0;
+            }
+        }
+    }
     rndMat.randomize(_output_weights, 0.0, 0.01);
 
     _squared_error.resize(output_dim);
@@ -69,7 +78,7 @@ void rnn::set_output_activation_function_dx(std::function<double(double)> fn){
 bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double> output, fs::path output_base_name, size_t series_length){
     const size_t L = series_length;
 
-    for(size_t epoch = 0; epoch < 500; epoch++){
+    for(size_t epoch = 0; epoch < 15; epoch++){
         std::cout << "Starting epoch " << epoch << "..." << std::endl;
 
         std::vector<size_t> indices;
@@ -79,16 +88,16 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
         //std::random_shuffle(indices.begin(), indices.end());
 
         for(auto idx : indices){
-            blaze::DynamicMatrix<double> X(_input_dim + _output_dim, L);
+            blaze::DynamicMatrix<double> X(_input_dim /*+ _output_dim*/, L);
             blaze::DynamicMatrix<double> Y(_output_dim, L);
 
             for(size_t i = 0; i < L; i++){
                 for(size_t j = 0; j < _input_dim; j++){
                     X(j,i) = input(j, (idx*L) + i);
                 }
-                for(size_t j = _input_dim; j < (_input_dim + _output_dim); j++){
+                /*for(size_t j = _input_dim; j < (_input_dim + _output_dim); j++){
                     X(j,i) = 0.0;
-                }
+                }*/
             }
             for(size_t i = 0; i < L; i++){
                 column(Y, i) = column(output, (idx*L) + i);
@@ -116,9 +125,9 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     o(i,t) = _output_activation_function(o(i,t));
                 }
 
-                for(size_t i = _input_dim; i < (_input_dim + _output_dim); i++){
+                /*for(size_t i = _input_dim; i < (_input_dim + _output_dim); i++){
                     X(i,t+1) = output(i-_input_dim,t);
-                }
+                }*/
             }
 
             //BPTT
@@ -151,7 +160,7 @@ bool rnn::train(blaze::DynamicMatrix<double> input, blaze::DynamicMatrix<double>
                     e[i] *= _hidden_activation_function_dx(z(i, t));
                 }
 
-                for(int32_t tau = t /*+ 1*/; tau >= std::max(0, t-25); --tau){
+                for(int32_t tau = t /*+ 1*/; tau >= std::max(0, t-5); --tau){
                     hidden_weights_delta += e * trans(column(s, t_idx(L,tau-1)));
                     input_weights_delta += e * trans(column(X, tau));
 
@@ -235,14 +244,14 @@ blaze::DynamicVector<double, blaze::columnVector> rnn::predict(blaze::DynamicMat
     avg /= L;
     return avg;*/
     //return column(output, 0);
-    //return column(output, L-1);
+    return column(output, L-1);
 
-    blaze::DynamicVector<double, blaze::columnVector> avg(output.rows());
+    /*blaze::DynamicVector<double, blaze::columnVector> avg(output.rows());
     avg = 0.0;
 
     for(int32_t i = 0; i < avg.size(); i++){
         avg[i] = output(i,0) + output(i,L-1);
     }
     avg /= 2.0;
-    return avg;
+    return avg;*/
 }
