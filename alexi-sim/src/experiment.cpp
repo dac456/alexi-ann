@@ -255,9 +255,9 @@ void experiment::step(){
     _path.push_back(std::make_pair(plot_pos.first, plot_pos.second));
 
     //Draw paths
-    /*for(size_t i = 0; i < _ref_path.size(); i += 4){
+    for(size_t i = 0; i < _ref_path.size(); i += 4){
         circleRGBA(_display, _ref_path[i].second, _ref_path[i].first, 2, 0, 0, 255, 127);
-    }*/
+    }
 
     for(size_t i = 0; i < _path.size(); i += 4){
         circleRGBA(_display, _path[i].first, _path[i].second, 2, 255, 255, 0, 127);

@@ -133,7 +133,7 @@ void platform::step(double width, double height){
     float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dx = _ann["dx"]->predict(in/*_input_dx*/);
     float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dy = _ann["dy"]->predict(in/*_input_dy*/);
     float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dtheta = _ann["dtheta"]->predict(in/*_input_dtheta*/);
-    //out_dtheta[0] = out_dtheta[0]*((stats[4][0]-stats[4][1])/2.0) + ((stats[4][0]+stats[4][1])/2.0);
+    out_dtheta[0] = out_dtheta[0]*((stats[4][0]-stats[4][1])/2.0) + ((stats[4][0]+stats[4][1])/2.0);
     if(_desired_linear_velocity == 0.0/* && _desired_angular_velocity == 0.0*/){
         out_dx[0] *= 0.25;
         out_dy[0] *= 0.25;

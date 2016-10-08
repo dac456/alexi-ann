@@ -95,6 +95,7 @@ int main(int argc, char* argv[])
         ("numhidden", po::value<int>()->default_value(1))
         ("hiddensize", po::value<int>()->default_value(20))
         ("reloaddata", po::value<bool>()->default_value(true))
+        //("testset", po::value<std::string>()->required())
     ;
 
     po::variables_map vm;
@@ -134,9 +135,11 @@ int main(int argc, char* argv[])
         data_preprocessor preproc(set_paths);
         preproc.run_processor(FILTER);
         //preproc.run_processor(AVERAGE);
-        //preproc.run_processor(THRESHOLD);
+        //
         preproc.run_processor(LOWPASS);
         preproc.run_processor(NORMALIZE);
+        preproc.run_processor(THRESHOLD);
+
 
         preproc.write_csv("./dx.csv", 0);
         preproc.write_csv("./dy.csv", 1);
@@ -186,14 +189,14 @@ int main(int argc, char* argv[])
     //tset_terrain.save_fann_data("./fann_ffn_terrain.data");
 
     // 1 20
-    fann_ffn ffn_dx(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
-    ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net");
+    /*fann_ffn ffn_dx(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
+    ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net", "./test_dx.data");
 
     fann_ffn ffn_dy(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
-    ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net");
+    ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net", "./test_dy.data");*/
 
     fann_ffn ffn_dtheta(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
-    ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net");
+    ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net", "./test_dtheta.data");
 
     //fann_ffn ffn_terrain(262, 256, 8, 64, FANN_SIGMOID);
     //ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");*/

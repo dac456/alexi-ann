@@ -195,7 +195,7 @@ void data_preprocessor::run_processor(PREPROCESSOR proc_type){
         break;
 
         case LOWPASS:
-        _lowpass_frames(0.3);
+        _lowpass_frames(0.25);
         break;
     }
 }
@@ -338,55 +338,134 @@ void data_preprocessor::_average_frames(size_t block_size){
 
 void data_preprocessor::_threshold_frames(double interval){
     for(auto& frame : _frames) {
-        if(frame.dtheta >= -0.05 && frame.dtheta <= 0.05) {
-            frame.dtheta = 0.0;
+        if(frame.dtheta > 0) {
+            if(frame.dtheta < 0.2 && frame.dtheta >= 0) {
+                frame.dtheta = 0.0;
+            } else if(frame.dtheta < 0.4 && frame.dtheta >= 0.2) {
+                frame.dtheta = 0.2;
+            } else if(frame.dtheta < 0.6 && frame.dtheta >= 0.4) {
+                frame.dtheta = 0.4;
+            } else if(frame.dtheta < 0.8 && frame.dtheta >= 0.6) {
+                frame.dtheta = 0.6;
+            } else if(frame.dtheta < 1.0 && frame.dtheta >= 0.8) {
+                frame.dtheta = 0.8;
+            }
+        } else if(frame.dtheta < 0) {
+            if(frame.dtheta > -0.2 && frame.dtheta < 0) {
+                frame.dtheta = 0.0;
+            } else if(frame.dtheta > -0.4 && frame.dtheta <= -0.2) {
+                frame.dtheta = -0.2;
+            } else if(frame.dtheta > -0.6 && frame.dtheta <= -0.4) {
+                frame.dtheta = -0.4;
+            } else if(frame.dtheta > -0.8 && frame.dtheta <= -0.6) {
+                frame.dtheta = -0.6;
+            } else if(frame.dtheta > -1.0 && frame.dtheta <= -0.8) {
+                frame.dtheta = -0.8;
+            }
+        }
 
-            frame.dtheta_class[0] = 0;
-            frame.dtheta_class[1] = 0;
-            frame.dtheta_class[2] = 0;
-            frame.dtheta_class[3] = 0;
-        } else if(frame.dtheta > 0.05 && frame.dtheta <= 0.2) {
-            frame.dtheta = 0.15;
+        if(frame.pitch > 0) {
+            if(frame.pitch < 0.2 && frame.pitch > 0) {
+                frame.pitch = 0.0;
+            } else if(frame.pitch < 0.4 && frame.pitch >= 0.2) {
+                frame.pitch = 0.2;
+            } else if(frame.pitch < 0.6 && frame.pitch >= 0.4) {
+                frame.pitch = 0.4;
+            } else if(frame.pitch < 0.8 && frame.pitch >= 0.6) {
+                frame.pitch = 0.6;
+            } else if(frame.pitch < 1.0 && frame.pitch >= 0.8) {
+                frame.pitch = 0.8;
+            }
+        } else if(frame.pitch < 0) {
+            if(frame.pitch > -0.2 && frame.pitch < 0) {
+                frame.pitch = 0.0;
+            } else if(frame.pitch > -0.4 && frame.pitch <= -0.2) {
+                frame.pitch = -0.2;
+            } else if(frame.pitch > -0.6 && frame.pitch <= -0.4) {
+                frame.pitch = -0.4;
+            } else if(frame.pitch > -0.8 && frame.pitch <= -0.6) {
+                frame.pitch = -0.6;
+            } else if(frame.pitch > -1.0 && frame.pitch <= -0.8) {
+                frame.pitch = -0.8;
+            }
+        }
 
-            frame.dtheta_class[0] = 0;
-            frame.dtheta_class[1] = 0;
-            frame.dtheta_class[2] = 0;
-            frame.dtheta_class[3] = 1;
-        } else if(frame.dtheta > 0.2 && frame.dtheta <= 0.4) {
-            frame.dtheta = 0.3;
+        if(frame.roll > 0) {
+            if(frame.roll < 0.2 && frame.roll > 0) {
+                frame.roll = 0.0;
+            } else if(frame.roll < 0.4 && frame.roll >= 0.2) {
+                frame.roll = 0.2;
+            } else if(frame.roll < 0.6 && frame.roll >= 0.4) {
+                frame.roll = 0.4;
+            } else if(frame.roll < 0.8 && frame.roll >= 0.6) {
+                frame.roll = 0.6;
+            } else if(frame.roll < 1.0 && frame.roll >= 0.8) {
+                frame.roll = 0.8;
+            }
+        } else if(frame.roll < 0) {
+            if(frame.roll > -0.2 && frame.roll < 0) {
+                frame.roll = 0.0;
+            } else if(frame.roll > -0.4 && frame.roll <= -0.2) {
+                frame.roll = -0.2;
+            } else if(frame.roll > -0.6 && frame.roll <= -0.4) {
+                frame.roll = -0.4;
+            } else if(frame.roll > -0.8 && frame.roll <= -0.6) {
+                frame.roll = -0.6;
+            } else if(frame.roll > -1.0 && frame.roll <= -0.8) {
+                frame.roll = -0.8;
+            }
+        }
 
-            frame.dtheta_class[0] = 0;
-            frame.dtheta_class[1] = 0;
-            frame.dtheta_class[2] = 1;
-            frame.dtheta_class[3] = 0;
-        } else if(frame.dtheta > 0.4) {
-            frame.dtheta = 0.6;
+        if(frame.left > 0) {
+            if(frame.left < 0.2 && frame.left > 0) {
+                frame.left = 0.0;
+            } else if(frame.left < 0.4 && frame.left >= 0.2) {
+                frame.left = 0.2;
+            } else if(frame.left < 0.6 && frame.left >= 0.4) {
+                frame.left = 0.4;
+            } else if(frame.left < 0.8 && frame.left >= 0.6) {
+                frame.left = 0.6;
+            } else if(frame.left < 1.0 && frame.left >= 0.8) {
+                frame.left = 0.8;
+            }
+        } else if(frame.left < 0) {
+            if(frame.left > -0.2 && frame.left < 0) {
+                frame.left = 0.0;
+            } else if(frame.left > -0.4 && frame.left <= -0.2) {
+                frame.left = -0.2;
+            } else if(frame.left > -0.6 && frame.left <= -0.4) {
+                frame.left = -0.4;
+            } else if(frame.left > -0.8 && frame.left <= -0.6) {
+                frame.left = -0.6;
+            } else if(frame.left > -1.0 && frame.left <= -0.8) {
+                frame.left = -0.8;
+            }
+        }
 
-            frame.dtheta_class[0] = 0;
-            frame.dtheta_class[1] = 1;
-            frame.dtheta_class[2] = 0;
-            frame.dtheta_class[3] = 0;
-        } else if(frame.dtheta < -0.05 && frame.dtheta >= -0.2) {
-            frame.dtheta = -0.15;
-
-            frame.dtheta_class[0] = 1;
-            frame.dtheta_class[1] = 0;
-            frame.dtheta_class[2] = 0;
-            frame.dtheta_class[3] = 1;
-        } else if(frame.dtheta < -0.2 && frame.dtheta >= -0.4) {
-            frame.dtheta = -0.3;
-
-            frame.dtheta_class[0] = 1;
-            frame.dtheta_class[1] = 0;
-            frame.dtheta_class[2] = 1;
-            frame.dtheta_class[3] = 0;
-        } else if(frame.dtheta < -0.4) {
-            frame.dtheta = -0.6;
-
-            frame.dtheta_class[0] = 1;
-            frame.dtheta_class[1] = 1;
-            frame.dtheta_class[2] = 0;
-            frame.dtheta_class[3] = 0;
+        if(frame.right > 0) {
+            if(frame.right < 0.2 && frame.right > 0) {
+                frame.right = 0.0;
+            } else if(frame.right < 0.4 && frame.right >= 0.2) {
+                frame.right = 0.2;
+            } else if(frame.right < 0.6 && frame.right >= 0.4) {
+                frame.right = 0.4;
+            } else if(frame.right < 0.8 && frame.right >= 0.6) {
+                frame.right = 0.6;
+            } else if(frame.right < 1.0 && frame.right >= 0.8) {
+                frame.right = 0.8;
+            }
+        } else if(frame.right < 0) {
+            if(frame.right > -0.2 && frame.right < 0) {
+                frame.right = 0.0;
+            } else if(frame.right > -0.4 && frame.right <= -0.2) {
+                frame.right = -0.2;
+            } else if(frame.right > -0.6 && frame.right <= -0.4) {
+                frame.right = -0.4;
+            } else if(frame.right > -0.8 && frame.right <= -0.6) {
+                frame.right = -0.6;
+            } else if(frame.right > -1.0 && frame.right <= -0.8) {
+                frame.right = -0.8;
+            }
         }
     }
 }
@@ -433,7 +512,9 @@ void data_preprocessor::_filter_frames() {
     while(restart) {
         bool found = false;
         for(size_t i = 0; i < _frames.size(); i++) {
-            if(_frames[i].dtheta > 0.25 || _frames[i].dtheta < -0.25) {
+            if(_frames[i].dtheta > 0.25 || _frames[i].dtheta < -0.25 ||
+                _frames[i].pitch > 1.22 || _frames[i].pitch < -1.22 ||
+                _frames[i].roll > 1.22 || _frames[i].roll < -1.22) {
                 _frames.erase(_frames.begin() + i);
 
                 found = true;
@@ -605,6 +686,28 @@ void data_preprocessor::_lowpass_frames(double alpha) {
 
     for(size_t i = 1; i < _frames.size(); i++) {
         _frames[i].dtheta = s[i];
+    }
+
+
+    s[0] = _frames[0].pitch;
+
+    for(size_t i = 1; i < _frames.size(); i++) {
+        s[i] = alpha*_frames[i].pitch + beta*s[i-1];
+    }
+
+    for(size_t i = 1; i < _frames.size(); i++) {
+        _frames[i].pitch = s[i];
+    }
+
+
+    s[0] = _frames[0].roll;
+
+    for(size_t i = 1; i < _frames.size(); i++) {
+        s[i] = alpha*_frames[i].roll + beta*s[i-1];
+    }
+
+    for(size_t i = 1; i < _frames.size(); i++) {
+        _frames[i].roll = s[i];
     }
 }
 

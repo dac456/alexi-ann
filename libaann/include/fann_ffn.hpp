@@ -13,7 +13,7 @@ public:
     fann_ffn(fs::path file);
     ~fann_ffn();
 
-    void train(fs::path file, fs::path output_file);
+    void train(fs::path file, fs::path output_file, fs::path test_file);
     double test(fs::path file);
     float* predict(float* input);
 

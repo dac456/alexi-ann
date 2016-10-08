@@ -32,6 +32,8 @@ int main(int argc, char* argv[]) {
     //testset.run_processor(AVERAGE);
     testset.run_processor(LOWPASS);
     testset.run_processor(NORMALIZE);
+    testset.run_processor(THRESHOLD);
+
     testset.write_csv("./test_dx.csv", 0);
     testset.write_csv("./test_dy.csv", 1);
     testset.write_csv("./test_dtheta.csv", 2);
