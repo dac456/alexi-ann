@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     std::cout << "MSE dy: " << dy_ann.test("./test_dy.data") << std::endl;
     std::cout << "MSE dtheta: " << dtheta_ann.test("./test_dtheta.data") << std::endl;
 
-    double stats[5][2];
+    double stats[7][2];
     std::ifstream fin("./stats.dat");
     std::string line;
     int idx = 0;

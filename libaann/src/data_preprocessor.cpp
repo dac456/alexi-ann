@@ -364,6 +364,58 @@ void data_preprocessor::_threshold_frames(double interval){
             }
         }
 
+        if(frame.dx > 0) {
+            if(frame.dx < 0.2 && frame.dx >= 0) {
+                frame.dx = 0.0;
+            } else if(frame.dx < 0.4 && frame.dx >= 0.2) {
+                frame.dx = 0.2;
+            } else if(frame.dx < 0.6 && frame.dx >= 0.4) {
+                frame.dx = 0.4;
+            } else if(frame.dx < 0.8 && frame.dx >= 0.6) {
+                frame.dx = 0.6;
+            } else if(frame.dx < 1.0 && frame.dx >= 0.8) {
+                frame.dx = 0.8;
+            }
+        } else if(frame.dx < 0) {
+            if(frame.dx > -0.2 && frame.dx < 0) {
+                frame.dx = 0.0;
+            } else if(frame.dx > -0.4 && frame.dx <= -0.2) {
+                frame.dx = -0.2;
+            } else if(frame.dx > -0.6 && frame.dx <= -0.4) {
+                frame.dx = -0.4;
+            } else if(frame.dx > -0.8 && frame.dx <= -0.6) {
+                frame.dx = -0.6;
+            } else if(frame.dx > -1.0 && frame.dx <= -0.8) {
+                frame.dx = -0.8;
+            }
+        }
+
+        if(frame.dy > 0) {
+            if(frame.dy < 0.2 && frame.dy >= 0) {
+                frame.dy = 0.0;
+            } else if(frame.dy < 0.4 && frame.dy >= 0.2) {
+                frame.dy = 0.2;
+            } else if(frame.dy < 0.6 && frame.dy >= 0.4) {
+                frame.dy = 0.4;
+            } else if(frame.dy < 0.8 && frame.dy >= 0.6) {
+                frame.dy = 0.6;
+            } else if(frame.dy < 1.0 && frame.dy >= 0.8) {
+                frame.dy = 0.8;
+            }
+        } else if(frame.dy < 0) {
+            if(frame.dy > -0.2 && frame.dy < 0) {
+                frame.dy = 0.0;
+            } else if(frame.dy > -0.4 && frame.dy <= -0.2) {
+                frame.dy = -0.2;
+            } else if(frame.dy > -0.6 && frame.dy <= -0.4) {
+                frame.dy = -0.4;
+            } else if(frame.dy > -0.8 && frame.dy <= -0.6) {
+                frame.dy = -0.6;
+            } else if(frame.dy > -1.0 && frame.dy <= -0.8) {
+                frame.dy = -0.8;
+            }
+        }
+
         if(frame.pitch > 0) {
             if(frame.pitch < 0.2 && frame.pitch > 0) {
                 frame.pitch = 0.0;
@@ -661,6 +713,34 @@ void data_preprocessor::_normalize_frames(int mode) {
             frame.dtheta = (frame.dtheta - ((max+min)/2.0)) / ((max-min)/2.0);
         }
         fout << max << " " << min << std::endl;
+
+        //dx
+        max = 0.0;
+        min = 0.0;
+
+        for(auto frame : _frames) {
+            if(frame.dx > max) max = frame.dx;
+            if(frame.dx < min) min = frame.dx;
+        }
+        for(auto& frame : _frames) {
+            frame.dx = (frame.dx - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+
+
+        //dy
+        max = 0.0;
+        min = 0.0;
+
+        for(auto frame : _frames) {
+            if(frame.dy > max) max = frame.dy;
+            if(frame.dy < min) min = frame.dy;
+        }
+        for(auto& frame : _frames) {
+            frame.dy = (frame.dy - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+
         break;
     }
 

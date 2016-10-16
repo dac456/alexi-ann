@@ -189,14 +189,14 @@ int main(int argc, char* argv[])
     //tset_terrain.save_fann_data("./fann_ffn_terrain.data");
 
     // 1 20
-    /*fann_ffn ffn_dx(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
+    fann_ffn ffn_dx(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
     ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net", "./test_dx.data");
 
     fann_ffn ffn_dy(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
-    ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net", "./test_dy.data");*/
+    ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net", "./test_dy.data");
 
-    fann_ffn ffn_dtheta(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
-    ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net", "./test_dtheta.data");
+    //fann_ffn ffn_dtheta(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
+    //ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net", "./test_dtheta.data");
 
     //fann_ffn ffn_terrain(262, 256, 8, 64, FANN_SIGMOID);
     //ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net");*/

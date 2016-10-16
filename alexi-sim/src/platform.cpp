@@ -35,7 +35,7 @@ platform::platform(SDL_Surface* disp, std::map<std::string, std::shared_ptr<fann
 }
 
 void platform::step(double width, double height){
-    const size_t interval = 4000;
+    const size_t interval = 2000;
 
     if(_ticks < interval){
         _desired_linear_velocity = _rand * 3.0f;
@@ -102,7 +102,7 @@ void platform::step(double width, double height){
     float in_dtheta_current[5] = {_left, _right, _imu->get_accel_pitch(), _imu->get_accel_roll(), _last_dtheta};
     //in_dtheta_current = {_desired_linear_velocity, _desired_angular_velocity, _imu->get_accel_pitch(), _last_dtheta};
 
-    double stats[5][2];
+    double stats[7][2];
     std::ifstream fin("./stats.dat");
     std::string line;
     int idx = 0;
@@ -133,10 +133,13 @@ void platform::step(double width, double height){
     float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dx = _ann["dx"]->predict(in/*_input_dx*/);
     float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dy = _ann["dy"]->predict(in/*_input_dy*/);
     float* /*blaze::DynamicVector<double, blaze::columnVector>*/ out_dtheta = _ann["dtheta"]->predict(in/*_input_dtheta*/);
-    out_dtheta[0] = out_dtheta[0]*((stats[4][0]-stats[4][1])/2.0) + ((stats[4][0]+stats[4][1])/2.0);
+    out_dtheta[0] = (out_dtheta[0]*1.5)*((stats[4][0]-stats[4][1])/2.0) + ((stats[4][0]+stats[4][1])/2.0);
+    out_dx[0] = (out_dx[0]*1.0)*((stats[5][0]-stats[5][1])/2.0) + ((stats[5][0]+stats[5][1])/2.0);
+    out_dy[0] = (out_dy[0]*1.0)*((stats[6][0]-stats[6][1])/2.0) + ((stats[6][0]+stats[6][1])/2.0);
+
     if(_desired_linear_velocity == 0.0/* && _desired_angular_velocity == 0.0*/){
-        out_dx[0] *= 0.25;
-        out_dy[0] *= 0.25;
+        //out_dx[0] *= 0.25;
+        //out_dy[0] *= 0.25;
         //out_dtheta[0] = 0.0;
     }
     //if(_desired_angular_velocity == 0.0f){
@@ -158,7 +161,7 @@ void platform::step(double width, double height){
     else{
         _yaw += out_dtheta[0];
     }*/
-    _yaw += out_dtheta[0]*-1.0;
+    _yaw += out_dtheta[0];
 
     _pos_x += speed*cos(_yaw);
     _pos_y += speed*sin(_yaw);

@@ -19,9 +19,8 @@ fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_laye
     }
     fann_set_activation_function_layer(_ann, FANN_LINEAR, num_layers - 1);
 
-    fann_set_training_algorithm(_ann, FANN_TRAIN_BATCH);
+    fann_set_training_algorithm(_ann, FANN_TRAIN_RPROP);
     fann_set_learning_rate(_ann, 0.25);
-    //fann_set_learning_momentum(_ann, 0.8);
     fann_set_activation_steepness_hidden(_ann, 0.5);
 
     delete[] layer_dim;
@@ -73,11 +72,11 @@ void fann_ffn::train(fs::path file, fs::path output_file, fs::path test_file){
             break;
         } else {
             last_test_error = test_error;
-        }*/
+        }
         if(test_error < 0.01) {
             std::cout << "Breaking at epoch " << i << " with MSE " << e << ", test error " << test_error << std::endl;
             break;
-        }
+        }*/
 
         if(i % 10 == 0) {
              std::cout << " Epoch: " << i << " " << "current training error: " << e << " | testing error: " << test_error << std::endl;
