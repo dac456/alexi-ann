@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
                 last_time = std::chrono::steady_clock::now();
 
                 frame_count++;
-                if(frame_count > 32000) running = false;
+                if(frame_count > 16000) running = false;
             }
         }
 

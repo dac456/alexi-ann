@@ -25,7 +25,7 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
         else{
 
         }
-#if 0
+#if 1
         std::vector<std::string> images;
         fs::path raygrid_path = set_path / "../raygrid/";
         if(fs::is_directory(raygrid_path)){
@@ -52,30 +52,10 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
             std::sort(diff_images.begin(), diff_images.end(), doj::alphanum_less<std::string>());
         }
 #endif
-        //Process frames
-        for(size_t i = 0; i < frames.size(); i++){
-            std::cout << "Parsing frame " << frames[i] << "..." << std::endl;
-            frame_data data = _parse_frame(frames[i]);
-            if(i == 0){
-                data.dx_last = 0.0;
-                data.dy_last = 0.0;
-                data.dtheta_last = 0.0;
-            }
-            else{
-                data.dx_last = _frames[i-1].dx;
-                data.dy_last = _frames[i-1].dy;
-                data.dtheta_last = _frames[i-1].dtheta;
-            }
-            if(!data.warped){
-                _frames.push_back(data);
-            }
-            else{
-                std::cout << "excluding frame " << i << " from path " << set_path.string() <<  std::endl;
-            }
-        }
+
 
         //Raygrid images
-        #if 0
+#if 0
         std::array<double,256> zero;
         zero.fill(0.0);
         _images.push_back(zero);
@@ -110,10 +90,10 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
                 _images.push_back(img_out);
             }
         }
-        #endif
+#endif
 #if 0
         //Diff images
-        std::array<double,256> zero;
+        std::array<double,1024> zero;
         zero.fill(0.0);
         _diff_images.push_back(zero);
 
@@ -141,15 +121,15 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
                 int start_x = (px - 8);
                 int start_y = (py - 8);
 
-                std::array<double,256> img;
+                std::array<double,1024> img;
                 img.fill(0.0);
 
                 size_t idx = 0;
                 #pragma omp parallel for
-                for(size_t i = 0; i < 16; i++){
+                for(size_t i = 0; i < 32; i++){
                     //size_t y = (start_y + i) % h;
                     int y = _wrap_value((start_y + i), h);
-                    for(size_t j = 0; j < 16; j++){
+                    for(size_t j = 0; j < 32; j++){
                         //size_t x = (start_x + j) % w;
                         int x = _wrap_value((start_x + j), w);
                         img[idx] = values[x + (w * y)];
@@ -169,6 +149,28 @@ data_preprocessor::data_preprocessor(std::vector<fs::path> set_paths){
             _images.push_back(_diff_images[i-1]);
         }
 #endif
+
+        //Process frames
+        for(size_t i = 0; i < frames.size(); i++){
+            std::cout << "Parsing frame " << frames[i] << "..." << std::endl;
+            frame_data data = _parse_frame(frames[i]);
+            if(i == 0){
+                data.dx_last = 0.0;
+                data.dy_last = 0.0;
+                data.dtheta_last = 0.0;
+            }
+            else{
+                data.dx_last = _frames[i-1].dx;
+                data.dy_last = _frames[i-1].dy;
+                data.dtheta_last = _frames[i-1].dtheta;
+            }
+            if(!data.warped){
+                _frames.push_back(data);
+            }
+            else{
+                std::cout << "excluding frame " << i << " from path " << set_path.string() <<  std::endl;
+            }
+        }
     }
 }
 
@@ -225,6 +227,15 @@ void data_preprocessor::write_csv(fs::path p, int mode) {
         }
     }
 
+    if(mode == 4) {
+        for(auto img : _diff_images) {
+            for(int i = 0; i < 1024; i++) {
+                fout << img[i] << ",";
+            }
+            fout << std::endl;
+        }
+    }
+
     fout.close();
 }
 
@@ -232,11 +243,11 @@ std::vector<frame_data> data_preprocessor::get_frames(){
     return _frames;
 }
 
-std::vector<std::array<double,256>> data_preprocessor::get_images(){
+std::vector<std::array<double,1024>> data_preprocessor::get_images(){
     return _images;
 }
 
-std::vector<std::array<double,256>> data_preprocessor::get_diff_images(){
+std::vector<std::array<double,1024>> data_preprocessor::get_diff_images(){
     return _diff_images;
 }
 
@@ -294,18 +305,18 @@ void data_preprocessor::_average_frames(size_t block_size){
     _frames = new_frames;
 
     //average raygrid images
-    std::vector<std::array<double,256>> new_img;
+    std::vector<std::array<double,1024>> new_img;
 
     for(size_t i = 0; i < _images.size(); i += block_size){
-        std::array<double,256> avg;
+        std::array<double,1024> avg;
         avg.fill(0.0);
 
         for(size_t j = i; j < i + block_size; j++){
-            for(size_t k = 0; k < 256; k++){
+            for(size_t k = 0; k < 1024; k++){
                 avg[k] += _images[j][k];
             }
         }
-        for(size_t k = 0; k < 256; k++){
+        for(size_t k = 0; k < 1024; k++){
             avg[k] /= static_cast<double>(block_size);
         }
 
@@ -315,18 +326,18 @@ void data_preprocessor::_average_frames(size_t block_size){
     _images = new_img;
 
     //average diff image deltas
-    std::vector<std::array<double,256>> new_diff_img;
+    std::vector<std::array<double,1024>> new_diff_img;
 
     for(size_t i = 0; i < _diff_images.size(); i += block_size){
-        std::array<double,256> avg;
+        std::array<double,1024> avg;
         avg.fill(0.0);
 
         for(size_t j = i; j < i + block_size; j++){
-            for(size_t k = 0; k < 256; k++){
+            for(size_t k = 0; k < 1024; k++){
                 avg[k] += _diff_images[j][k];
             }
         }
-        for(size_t k = 0; k < 256; k++){
+        for(size_t k = 0; k < 1024; k++){
             avg[k] /= static_cast<double>(block_size);
         }
 
@@ -566,8 +577,11 @@ void data_preprocessor::_filter_frames() {
         for(size_t i = 0; i < _frames.size(); i++) {
             if(_frames[i].dtheta > 0.25 || _frames[i].dtheta < -0.25 ||
                 _frames[i].pitch > 1.22 || _frames[i].pitch < -1.22 ||
-                _frames[i].roll > 1.22 || _frames[i].roll < -1.22) {
+                _frames[i].roll > 1.22 || _frames[i].roll < -1.22 ||
+                _frames[i].dy > 0.02 || _frames[i].dy < -0.02) {
                 _frames.erase(_frames.begin() + i);
+                //_images.erase(_images.begin() + i);
+                //_diff_images.erase(_diff_images.begin() + i);
 
                 found = true;
                 break;
@@ -589,7 +603,7 @@ void data_preprocessor::_normalize_frames(int mode) {
 
     switch(mode) {
         case 0:
-        //vLeft
+        /*//vLeft
         for(auto& frame : _frames) {
             mean += frame.left;
         }
@@ -645,7 +659,8 @@ void data_preprocessor::_normalize_frames(int mode) {
         for(auto& frame : _frames) {
             frame.pitch = (frame.pitch - mean) / dev;
         }
-        fout << mean << " " << dev << std::endl;
+        fout << mean << " " << dev << std::endl;*/
+        std::cout << "deprecated normalization mode" << std::endl;
         break;
 
         case 1:
@@ -738,6 +753,39 @@ void data_preprocessor::_normalize_frames(int mode) {
         }
         for(auto& frame : _frames) {
             frame.dy = (frame.dy - ((max+min)/2.0)) / ((max-min)/2.0);
+        }
+        fout << max << " " << min << std::endl;
+
+        //terrain
+        max = 0.0;
+        min = 0.0;
+
+        for(auto diff : _diff_images) {
+            for(int i = 0; i < 1024; i++) {
+                if(diff[i] > max) max = diff[i];
+                if(diff[i] < min) min = diff[i];
+            }
+        }
+        for(auto& diff : _diff_images) {
+            for(int i = 0; i < 1024; i++) {
+                diff[i] = (diff[i] - ((max+min)/2.0)) / ((max-min)/2.0);
+            }
+        }
+        fout << max << " " << min << std::endl;
+
+        max = 0.0;
+        min = 0.0;
+
+        for(auto diff : _images) {
+            for(int i = 0; i < 1024; i++) {
+                if(diff[i] > max) max = diff[i];
+                if(diff[i] < min) min = diff[i];
+            }
+        }
+        for(auto& diff : _images) {
+            for(int i = 0; i < 1024; i++) {
+                diff[i] = (diff[i] - ((max+min)/2.0)) / ((max-min)/2.0);
+            }
         }
         fout << max << " " << min << std::endl;
 

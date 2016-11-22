@@ -161,8 +161,8 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         _ann["dx"] = std::make_shared<fann_ffn>("fann_dx.net");
         _ann["dy"] = std::make_shared<fann_ffn>("fann_dy.net");
         _ann["dtheta"] = std::make_shared<fann_ffn>("fann_dtheta.net");
+        _ann["terrain"] = std::make_shared<fann_ffn>("fann_terrain.net");
 
-        //_ann["terrain"] = std::make_shared<fann_ffn>("fann_terrain.net");
         _imu = std::make_shared<fake_imu>(_terrain);
         _platform = std::make_shared<platform>(_display, _ann, _imu, opts["vehicle.x"].as<double>(), opts["vehicle.z"].as<double>());
     }
@@ -181,26 +181,44 @@ void experiment::step(){
     std::pair<size_t,size_t> plot_pos = _real_pos_to_pixel_pos(real_pos);
 
     if(_terrain){
+        double stats[9][2];
+        std::ifstream fin("./stats.dat");
+        std::string line;
+        int idx = 0;
+        while(std::getline(fin, line)) {
+            std::istringstream iss(line);
+            iss >> stats[idx][0] >> stats[idx][1];
+            idx++;
+        }
+
         /*float* in = _platform->get_last_input();
         if(in){
-            float inTerrain[262];
-            for(size_t i = 0; i < 6; i++) inTerrain[i] = in[i];
+            float inTerrain[1028];
+            for(size_t i = 0; i < 4; i++) inTerrain[i] = in[i];
+
+            int px = plot_pos.first;
+            int py = plot_pos.second;
+            int start_x = (px - 16);
+            int start_y = (py - 16);
 
             if(_last_terrain_update == nullptr){
-                for(size_t i = 6; i < 262; i++) inTerrain[i] = 0.0f;
+                //for(size_t i = 4; i < 1028; i++) inTerrain[i] = (0.0 - ((stats[8][0]+stats[8][1])/2.0))/((stats[8][0]-stats[8][1])/2.0);
+                for(size_t i = 4; i < 1028; i++) inTerrain[i] = 0.0;
             }
             else{
-                for(size_t i = 6; i < 262; i++) inTerrain[i] = _last_terrain_update[i-6];
+                //for(size_t i = 4; i < 1028; i++) inTerrain[i] = (_last_terrain_update[i-4] - ((stats[8][0]+stats[8][1])/2.0))/((stats[8][0]-stats[8][1])/2.0);
+                for(size_t i = 4; i < 1028; i++) inTerrain[i] = _last_terrain_update[i-4];
             }
 
-            float* out_terrain = _ann["terrain"]->predict(in);
+            float* out_terrain = _ann["terrain"]->predict(inTerrain);
             if(out_terrain){
                 _last_terrain_update = out_terrain;
 
-                int px = plot_pos.first;
-                int py = plot_pos.second;
-                int start_x = (px - 8);
-                int start_y = (py - 8);
+                for(int i = 0; i < 1024; i++) {
+                    //out_terrain[i] = (out_terrain[i] - ((stats[7][0]+stats[7][1])/2.0))/((stats[7][0]-stats[7][1])/2.0);
+                    //out_terrain[i] = (out_terrain[i]*1.0)*((stats[7][0]-stats[7][1])/2.0) + ((stats[7][0]+stats[7][1])/2.0);
+                    out_terrain[i] *= 0.9;
+                }
 
                 #pragma omp parallel for
                 for(size_t wy = 0; wy < 4; wy++){
@@ -211,7 +229,7 @@ void experiment::step(){
                         float c = 0.0f;
                         for(size_t y = wy*4; y < (wy*4) + 4; y++){
                             for(size_t x = wx*4; x < (wx*4) + 4; x++){
-                                avg += out_terrain[x + (y * 16)];
+                                avg += out_terrain[x + (y * 32)];
                                 c += 1.0f;
                             }
                         }
@@ -219,14 +237,14 @@ void experiment::step(){
 
                         for(size_t y = wy*4; y < (wy*4) + 4; y++){
                             for(size_t x = wx*4; x < (wx*4) + 4; x++){
-                                out_terrain[x + (y * 16)] = avg;
+                                out_terrain[x + (y * 32)] = avg;
                             }
                         }
                     }
                 }
 
                 size_t idx = 0;
-                for(size_t i = 0; i < 16; i++){
+                for(size_t i = 0; i < 32; i++){
                     int y = (start_y + i);
                     if(y < 0){
                         y = _terrain->get_display_height() + y;
@@ -234,7 +252,7 @@ void experiment::step(){
                     else if(y >= _terrain->get_display_height()){
                         y = y - _terrain->get_display_height();
                     }
-                    for(size_t j = 0; j < 16; j++){
+                    for(size_t j = 0; j < 32; j++){
                         int x = (start_x + j);
                         if(x < 0){
                             x = _terrain->get_display_width() + x;
@@ -255,13 +273,13 @@ void experiment::step(){
     _path.push_back(std::make_pair(plot_pos.first, plot_pos.second));
 
     //Draw paths
-    for(size_t i = 0; i < _ref_path.size(); i += 4){
+    /*for(size_t i = 0; i < _ref_path.size(); i += 4){
         circleRGBA(_display, _ref_path[i].second, _ref_path[i].first, 2, 0, 0, 255, 127);
     }
 
     for(size_t i = 0; i < _path.size(); i += 4){
         circleRGBA(_display, _path[i].first, _path[i].second, 2, 255, 255, 0, 127);
-    }
+    }*/
 
     //Draw vehicle
     circleRGBA(_display, plot_pos.first, plot_pos.second, 16, 255, 0, 0, 255);

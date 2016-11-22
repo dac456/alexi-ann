@@ -17,11 +17,12 @@ fann_ffn::fann_ffn(size_t input_size, size_t output_size, size_t num_hidden_laye
     for(size_t i = 1; i < num_layers - 1; i++){
         fann_set_activation_function_layer(_ann, act, i);
     }
-    fann_set_activation_function_layer(_ann, FANN_LINEAR, num_layers - 1);
+    fann_set_activation_function_layer(_ann, FANN_SIGMOID_SYMMETRIC, num_layers - 1);
 
-    fann_set_training_algorithm(_ann, FANN_TRAIN_RPROP);
+    fann_set_training_algorithm(_ann, FANN_TRAIN_BATCH); //RPROP for dtheta
     fann_set_learning_rate(_ann, 0.25);
-    fann_set_activation_steepness_hidden(_ann, 0.5);
+    //fann_set_activation_steepness_hidden(_ann, 0.5); //dtheta
+    fann_set_activation_steepness_hidden(_ann, 0.5); //dx 0.8
 
     delete[] layer_dim;
 }
@@ -39,8 +40,9 @@ fann_ffn::~fann_ffn(){
 void fann_ffn::train(fs::path file, fs::path output_file, fs::path test_file){
     //fann_init_weights(_ann, fann_read_train_from_file(file.string().c_str()));
     //fann_randomize_weights(_ann, -0.577350269, 0.577350269);
-    //fann_randomize_weights(_ann, -0.5, 0.5);
+    //fann_randomize_weights(_ann, -1, 1);
     fann_randomize_weights(_ann, -0.5, 0.5);
+    static struct fann* out;
 
     /*float last_e = 9999999.0;
     fann_train_data* data = fann_read_train_from_file(file.string().c_str());
@@ -62,11 +64,16 @@ void fann_ffn::train(fs::path file, fs::path output_file, fs::path test_file){
     fann_train_data* data = fann_read_train_from_file(file.string().c_str());
     fann_train_data* test_data = fann_read_train_from_file(test_file.string().c_str());
     float last_test_error = 99999.9f;
+    float min_test_error = 999999.9f;
     for(size_t i = 0; i < 2000; i++) {
     //int i = 0;
     //for(;;) {
         float e = fann_train_epoch(_ann, data);
         float test_error = fann_test_data(_ann, test_data);
+        if(test_error < min_test_error) {
+            out = fann_copy(_ann);
+            min_test_error = test_error;
+        }
         /*if(test_error > last_test_error) {
             std::cout << "Breaking at epoch " << i << " with MSE " << e << ", test error " << test_error << std::endl;
             break;
@@ -85,7 +92,8 @@ void fann_ffn::train(fs::path file, fs::path output_file, fs::path test_file){
         //i++;
     }
 
-    fann_save(_ann, output_file.string().c_str());
+    std::cout << "Saving with error " << min_test_error << std::endl;
+    fann_save(out, output_file.string().c_str());
 }
 
 double fann_ffn::test(fs::path file) {

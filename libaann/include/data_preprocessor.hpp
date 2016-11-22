@@ -16,8 +16,8 @@ enum PREPROCESSOR{
 class data_preprocessor{
 private:
     std::vector<frame_data> _frames;
-    std::vector<std::array<double,256>> _images;
-    std::vector<std::array<double,256>> _diff_images;
+    std::vector<std::array<double,1024>> _images;
+    std::vector<std::array<double,1024>> _diff_images;
 
 public:
     data_preprocessor(std::vector<fs::path> set_paths);
@@ -26,8 +26,8 @@ public:
     void write_csv(fs::path p, int mode);
 
     std::vector<frame_data> get_frames();
-    std::vector<std::array<double,256>> get_images();
-    std::vector<std::array<double,256>> get_diff_images();
+    std::vector<std::array<double,1024>> get_images();
+    std::vector<std::array<double,1024>> get_diff_images();
 
 
 private:

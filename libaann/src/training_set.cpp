@@ -54,7 +54,7 @@ namespace po = boost::program_options;
     std::cout << _target_set.columns() << std::endl;
 }*/
 
-training_set::training_set(std::vector<frame_data> frames, std::vector<std::array<double,256>> images, std::vector<std::array<double,256>> diff_images, TRAINING_TYPE type)
+training_set::training_set(std::vector<frame_data> frames, std::vector<std::array<double,1024>> images, std::vector<std::array<double,1024>> diff_images, TRAINING_TYPE type)
     : _frames(frames)
     , _images(images)
     , _diff_images(diff_images)
@@ -64,7 +64,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
         _input_set.resize(4, frames.size());
     }
     else{
-        _input_set.resize(262, frames.size());
+        _input_set.resize(1028, frames.size());
     }
 
     switch(type){
@@ -75,7 +75,7 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
         break;
 
         case TERRAIN:
-        _target_set.resize(256, diff_images.size());
+        _target_set.resize(1024, diff_images.size());
         break;
 
         case ALL:
@@ -114,16 +114,15 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
             _input_set(0,i) = data.left;
             _input_set(1,i) = data.right;
             _input_set(2,i) = data.pitch;
-            _input_set(3,i) = data.dx_last;
-            _input_set(4,i) = data.dy_last;
-            _input_set(5,i) = data.theta;
-            for(int y = 6; y < 262; y++){
-                _input_set(y,i) = _images[i][y-5];
+            _input_set(3,i) = data.roll;
+
+            for(int y = 4; y < 1028; y++){
+                _input_set(y,i) = _images[i][y-4];
             }
 
             switch(type){
                 case TERRAIN:
-                for(int y = 0; y < 256; y++){
+                for(int y = 0; y < 1024; y++){
                     _target_set(y,i) = _diff_images[i][y];
                 }
                 break;
@@ -144,7 +143,7 @@ void training_set::save_fann_data(fs::path file){
         }
     }
     else{
-        fout << _input_set.columns() << " 262 256" << std::endl;
+        fout << _input_set.columns() << " 1028 1024" << std::endl;
         for(size_t i = 0; i < _input_set.columns(); i++){
             //fout << _input_set(0,i) << " " << _input_set(1,i) << " " << _input_set(2,i) << " " << _input_set(3,i) << " " << _input_set(4,i) << std::endl;
             for(size_t r = 0; r < _input_set.rows(); r++){

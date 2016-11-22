@@ -37,6 +37,8 @@ int main(int argc, char* argv[]) {
     testset.write_csv("./test_dx.csv", 0);
     testset.write_csv("./test_dy.csv", 1);
     testset.write_csv("./test_dtheta.csv", 2);
+    testset.write_csv("./test_pitch.csv", 3);
+    testset.write_csv("./test_terrain.csv", 4);
 
     training_set tset_dx(testset.get_frames(), testset.get_images(), testset.get_diff_images(), DX);
     tset_dx.save_fann_data("./test_dx.data");
@@ -44,6 +46,8 @@ int main(int argc, char* argv[]) {
     tset_dy.save_fann_data("./test_dy.data");
     training_set tset_dtheta(testset.get_frames(), testset.get_images(), testset.get_diff_images(), DTHETA);
     tset_dtheta.save_fann_data("./test_dtheta.data");
+    training_set tset_terrain(testset.get_frames(), testset.get_images(), testset.get_diff_images(), TERRAIN);
+    tset_terrain.save_fann_data("./test_terrain.data");
 
     //std::shared_ptr<fann_fnn> dx_ann = std::make_shared<fann_ffn>("fann_dx.net");
     //std::shared_ptr<fann_fnn> dy_ann = std::make_shared<fann_ffn>("fann_dy.net");
@@ -51,11 +55,13 @@ int main(int argc, char* argv[]) {
     fann_ffn dx_ann("fann_dx.net");
     fann_ffn dy_ann("fann_dy.net");
     fann_ffn dtheta_ann("fann_dtheta.net");
+    fann_ffn terrain_ann("fann_terrain.net");
     std::cout << "MSE dx: " << dx_ann.test("./test_dx.data") << std::endl;
     std::cout << "MSE dy: " << dy_ann.test("./test_dy.data") << std::endl;
     std::cout << "MSE dtheta: " << dtheta_ann.test("./test_dtheta.data") << std::endl;
+    std::cout << "MSE terrain: " << terrain_ann.test("./test_terrain.data") << std::endl;
 
-    double stats[7][2];
+    double stats[9][2];
     std::ifstream fin("./stats.dat");
     std::string line;
     int idx = 0;
@@ -99,7 +105,7 @@ int main(int argc, char* argv[]) {
         float dtheta_out = dtheta[0];
         float speed = sqrt(pow(dx_out, 2.0) + pow(dy_out, 2.0));
 
-        fout << dx_out << "," << dy_out << "," << dtheta_out << "," << speed << std::endl;
+        fout << dx_out << "," << dy_out << "," << dtheta_out << "," << speed << "," << in[0] << "," << in[1] << "," << in[2] << std::endl;
     }
 
     fout.close();
