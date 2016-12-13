@@ -64,21 +64,22 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
         _input_set.resize(4, frames.size());
     }
     else{
-        _input_set.resize(1028, frames.size());
+        _input_set.resize(1028, diff_images.size());
     }
 
     switch(type){
-        case DX:
-        case DY:
-        case DTHETA:
+    case DX:
+    case DY:
+    case DTHETA:
+    case SPEED:
         _target_set.resize(1, frames.size());
         break;
 
-        case TERRAIN:
+    case TERRAIN:
         _target_set.resize(1024, diff_images.size());
         break;
 
-        case ALL:
+    case ALL:
         _target_set.resize(3, frames.size());
         break;
     }
@@ -90,38 +91,42 @@ training_set::training_set(std::vector<frame_data> frames, std::vector<std::arra
             //column(_input_set, i) = blaze::StaticVector<double, 3UL, blaze::columnVector>(data.vdl, data.vda, data.pitch/*, data.roll*/);
 
             switch(type){
-                case DX:
+            case DX:
                 //column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.roll, data.dx_last);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dx);
                 break;
 
-                case DY:
+            case DY:
                 //column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.roll, data.dy_last);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dy);
                 break;
 
-                case DTHETA:
+            case DTHETA:
                 //column(_input_set, i) = blaze::StaticVector<double, 5UL, blaze::columnVector>(data.left, data.right, data.pitch, data.roll, data.dtheta_last);
                 column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.dtheta);
+                break;
+
+            case SPEED:
+                column(_target_set, i) = blaze::StaticVector<double, 1UL, blaze::columnVector>(data.speed);
                 break;
             }
         }
     }
     else{
         for(size_t i = 0; i < _diff_images.size(); i++){
-            frame_data data = _frames[i];
+            frame_data* data = &_frames[i];
             //column(_input_set, i) = blaze::StaticVector<double, 261UL, blaze::columnVector>(data.left, data.right, data.pitch, data.dx_last, data.dy_last);
-            _input_set(0,i) = data.left;
-            _input_set(1,i) = data.right;
-            _input_set(2,i) = data.pitch;
-            _input_set(3,i) = data.roll;
+            _input_set(0,i) = data->left;
+            _input_set(1,i) = data->right;
+            _input_set(2,i) = data->pitch;
+            _input_set(3,i) = data->roll;
 
             for(int y = 4; y < 1028; y++){
                 _input_set(y,i) = _images[i][y-4];
             }
 
             switch(type){
-                case TERRAIN:
+            case TERRAIN:
                 for(int y = 0; y < 1024; y++){
                     _target_set(y,i) = _diff_images[i][y];
                 }

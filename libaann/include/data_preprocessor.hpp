@@ -11,6 +11,7 @@ enum PREPROCESSOR{
     FILTER,
     NORMALIZE,
     LOWPASS,
+    NOISE,
 };
 
 class data_preprocessor{
@@ -39,6 +40,7 @@ private:
     void _filter_frames();
     void _normalize_frames(int mode);
     void _lowpass_frames(double alpha);
+    void _add_noise(double min, double max);
 
     frame_data _parse_frame(fs::path file);
 };

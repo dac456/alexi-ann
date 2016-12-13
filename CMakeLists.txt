@@ -8,7 +8,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_definitions( -DBLAZE_USE_CPP_THREADS )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -march=native")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -qopenmp -O0 -ggdb -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -qopenmp -O3 -march=native")
 endif()
 message(${CMAKE_CXX_FLAGS})
 

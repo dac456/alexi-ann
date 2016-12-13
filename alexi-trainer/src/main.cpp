@@ -136,23 +136,26 @@ int main(int argc, char* argv[])
         preproc.run_processor(FILTER);
         //preproc.run_processor(AVERAGE);
         //
-        preproc.run_processor(LOWPASS);
+        //preproc.run_processor(LOWPASS);
         preproc.run_processor(NORMALIZE);
         preproc.run_processor(THRESHOLD);
+        //preproc.run_processor(AVERAGE);
+        //preproc.run_processor(NOISE);
 
 
-        preproc.write_csv("./dx.csv", 0);
-        preproc.write_csv("./dy.csv", 1);
+        //preproc.write_csv("./dx.csv", 0);
+        //preproc.write_csv("./dy.csv", 1);
         preproc.write_csv("./dtheta.csv", 2);
         preproc.write_csv("./pitch.csv", 3);
+        preproc.write_csv("./speed.csv", 5);
 
-        training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
+        /*training_set tset_dx(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DX);
         tset_dx.save_blaze_data("./rnn_dx");
         tset_dx.save_fann_data("./fann_ffn_dx.data");
 
         training_set tset_dy(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DY);
         tset_dy.save_blaze_data("./rnn_dy");
-        tset_dy.save_fann_data("./fann_ffn_dy.data");
+        tset_dy.save_fann_data("./fann_ffn_dy.data");*/
 
         training_set tset_dtheta(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), DTHETA);
         tset_dtheta.save_blaze_data("./rnn_dtheta");
@@ -160,6 +163,9 @@ int main(int argc, char* argv[])
 
         training_set tset_terrain(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), TERRAIN);
         tset_terrain.save_fann_data("./fann_ffn_terrain.data");
+
+        training_set tset_speed(preproc.get_frames(), preproc.get_images(), preproc.get_diff_images(), SPEED);
+        tset_speed.save_fann_data("./fann_ffn_speed.data");
     }
 
     /*rnn rnn_dx(3, 100, 1);
@@ -195,14 +201,17 @@ int main(int argc, char* argv[])
     //fann_ffn ffn_dx(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
     //ffn_dx.train("./fann_ffn_dx.data", "fann_dx.net", "./test_dx.data");
 
-    fann_ffn ffn_dy(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
-    ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net", "./test_dy.data");
+    //fann_ffn ffn_dy(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
+    //ffn_dy.train("./fann_ffn_dy.data", "fann_dy.net", "./test_dy.data");
+
+    //fann_ffn ffn_speed(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
+    //ffn_speed.train("./fann_ffn_speed.data", "fann_speed.net", "./test_speed.data");
 
     //fann_ffn ffn_dtheta(4, 1, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
     //ffn_dtheta.train("./fann_ffn_dtheta.data", "fann_dtheta.net", "./test_dtheta.data");
 
-    //fann_ffn ffn_terrain(1028, 1024, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
-    //ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net", "./test_terrain.data");
+    fann_ffn ffn_terrain(1028, 1024, vm["numhidden"].as<int>(), vm["hiddensize"].as<int>(), FANN_SIGMOID_SYMMETRIC);
+    ffn_terrain.train("./fann_ffn_terrain.data", "fann_terrain.net", "./test_terrain.data");
 
     /*float test[4] = {-21.3466f, -0.245896f, 2.0f, -1.57f};
     float* out = test_ffn.predict(test);

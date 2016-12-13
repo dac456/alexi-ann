@@ -2,6 +2,7 @@
 #include "data_preprocessor.hpp"
 
 #include <iostream>
+#include <chrono>
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
@@ -115,7 +116,7 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         po::variables_map opts;
         std::ifstream cfg(full_cfg_path.string());
 
-        fs::path frame_path = full_cfg_path;
+        /*fs::path frame_path = full_cfg_path;
         frame_path.replace_extension("");
         frame_path = fs::canonical(frame_path / "framedata");
         std::cout << frame_path.string() << std::endl;
@@ -126,7 +127,7 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         std::vector<frame_data> frames = preproc.get_frames();
         for(auto frame : frames){
             _ref_path.push_back(std::make_pair(frame.px, frame.py));
-        }
+        }*/
 
         po::store(po::parse_config_file(cfg , desc), opts);
         po::notify(opts);
@@ -160,6 +161,7 @@ experiment::experiment(SDL_Surface* disp, fs::path cfg)
         _ann["dtheta"]->set_output_activation_function_dx(linear_dx);*/
         _ann["dx"] = std::make_shared<fann_ffn>("fann_dx.net");
         _ann["dy"] = std::make_shared<fann_ffn>("fann_dy.net");
+        _ann["speed"] = std::make_shared<fann_ffn>("fann_speed.net");
         _ann["dtheta"] = std::make_shared<fann_ffn>("fann_dtheta.net");
         _ann["terrain"] = std::make_shared<fann_ffn>("fann_terrain.net");
 
@@ -174,14 +176,21 @@ void experiment::step(){
     }
 
     if(_platform){
+        static std::ofstream fout("./runtime.csv");
+        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         _platform->step(_terrain->get_width() * _particle_radius * 2.0, _terrain->get_height() * _particle_radius * 2.0);
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+        auto micros = std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+        std::cout << "Step took " << micros << "us" << std::endl;
+        fout << micros << std::endl;
     }
 
     std::pair<double,double> real_pos = std::make_pair(_platform->get_pos_x(), _platform->get_pos_y());
     std::pair<size_t,size_t> plot_pos = _real_pos_to_pixel_pos(real_pos);
 
     if(_terrain){
-        double stats[9][2];
+        double stats[10][2];
         std::ifstream fin("./stats.dat");
         std::string line;
         int idx = 0;
@@ -191,7 +200,7 @@ void experiment::step(){
             idx++;
         }
 
-        /*float* in = _platform->get_last_input();
+        float* in = _platform->get_last_input();
         if(in){
             float inTerrain[1028];
             for(size_t i = 0; i < 4; i++) inTerrain[i] = in[i];
@@ -217,10 +226,11 @@ void experiment::step(){
                 for(int i = 0; i < 1024; i++) {
                     //out_terrain[i] = (out_terrain[i] - ((stats[7][0]+stats[7][1])/2.0))/((stats[7][0]-stats[7][1])/2.0);
                     //out_terrain[i] = (out_terrain[i]*1.0)*((stats[7][0]-stats[7][1])/2.0) + ((stats[7][0]+stats[7][1])/2.0);
-                    out_terrain[i] *= 0.9;
+                    //out_terrain[i] *= 0.15;
+                    //out_terrain[i] *= 0.05;
                 }
 
-                #pragma omp parallel for
+                /*#pragma omp parallel for
                 for(size_t wy = 0; wy < 4; wy++){
                     #pragma omp parallel for
                     for(size_t wx = 0; wx < 4; wx++){
@@ -241,7 +251,7 @@ void experiment::step(){
                             }
                         }
                     }
-                }
+                }*/
 
                 size_t idx = 0;
                 for(size_t i = 0; i < 32; i++){
@@ -265,7 +275,7 @@ void experiment::step(){
                     }
                 }
             }
-        }*/
+        }
         _terrain->update();
     }
 

@@ -12,6 +12,8 @@ struct frame_data{
     double x, y;
     int px, py;
     double dx, dy;
+    double speed;
+    double acceleration;
     double dx_last, dy_last;
     double theta;
     double dtheta;
@@ -36,6 +38,7 @@ struct frame_data{
 enum TRAINING_TYPE{
     DX,
     DY,
+    SPEED,
     DTHETA,
     TERRAIN,
     ALL
